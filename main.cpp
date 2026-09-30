@@ -1,19 +1,37 @@
 #include <QCoreApplication>
+#include <QTimer>
+#include <QTcpServer>
+#include <QHostAddress>
+#include <QCommandLineParser>
+#include <QCommandLineOption>
+#include <QDebug>
+#include <QTextStream>
+#include <QString>
 
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    QCommandLineParser parser;
+    QCommandLineOption portParse(QStringList()<<"p"<<"port","Port","default-port");
+    QCommandLineOption protocolParse(QStringList()<<"protocol"<<"protocol","Protocol","default-protocol");
+    parser.addOption(portParse);
+    parser.addOption(protocolParse);
+    qDebug() << "Введите порт и протокол:";
+    QTextStream in(stdin);
+    QString line = in.readLine();
+    QStringList arg = line.split(' ', Qt::SkipEmptyParts);
+    arg.prepend(a.applicationName());
+    parser.parse(arg);
+    if (parser.isSet(portParse))
+    {
+        int port = parser.value(portParse).toInt();
+        qDebug() << "Введенный порт:" << port;
+    }
+    if (parser.isSet(protocolParse))
+    {
+        QString protocol = parser.value(protocolParse).toLower();
+        qDebug() << "Введенный протокол:" <<  protocol;
+    }
 
-    // Set up code that uses the Qt event loop here.
-    // Call QCoreApplication::quit() or QCoreApplication::exit() to quit the application.
-    // A not very useful example would be including
-    // #include <QTimer>
-    // near the top of the file and calling
-    // QTimer::singleShot(5000, &a, &QCoreApplication::quit);
-    // which quits the application after 5 seconds.
-
-    // If you do not need a running Qt event loop, remove the call
-    // to QCoreApplication::exec() or use the Non-Qt Plain C++ Application template.
-
-    return QCoreApplication::exec();
+    return a.exec();
 }
