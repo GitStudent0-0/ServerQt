@@ -1,12 +1,11 @@
 #include <QCoreApplication>
-#include <QTimer>
 #include <QTcpServer>
 #include <QHostAddress>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
 #include <QDebug>
-#include <QTextStream>
 #include <QString>
+#include "MyServer.h"
 
 int main(int argc, char *argv[])
 {
@@ -27,22 +26,7 @@ int main(int argc, char *argv[])
     if (parser.isSet(protocolOption))
         protocol = parser.value(protocolOption);
 
-    QTcpServer* server = new QTcpServer();
-
-
-    if (server->listen(QHostAddress::Any, port))
-        qDebug() << "Port: "<< port;
-
-
-    int execResult = a.exec();
-
-    if (server->isListening())
-    {
-        server->close();
-        qDebug() << "server close";
-        delete server;
-        server = nullptr;
-    }
-
-    return execResult;
+    MyServer* server = new MyServer(qApp);
+    server->startServer(port);
+    return a.exec();
 }
