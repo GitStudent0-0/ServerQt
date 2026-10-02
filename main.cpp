@@ -1,11 +1,11 @@
-#include <QCoreApplication>
-#include <QTcpServer>
-#include <QHostAddress>
-#include <QCommandLineParser>
+#include "Server.h"
 #include <QCommandLineOption>
+#include <QCommandLineParser>
+#include <QCoreApplication>
 #include <QDebug>
+#include <QHostAddress>
 #include <QString>
-#include "MyServer.h"
+#include <QTcpServer>
 
 int main(int argc, char *argv[])
 {

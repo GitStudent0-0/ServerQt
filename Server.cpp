@@ -1,8 +1,8 @@
-#include "MyServer.h"
+#include "Server.h"
 
 MyServer::MyServer(QObject* parent) : QTcpServer(parent)
 {
-    connect(this, &QTcpServer::newConnection, this, &MyServer::slotNewConnection);
+  connect(this, &QTcpServer::newConnection, this, &MyServer::newConnection);
 }
 
 MyServer::~MyServer()
@@ -20,15 +20,15 @@ void MyServer::startServer(int port)
         qDebug() << "The server is listening on port: "<< port;
 }
 
-void MyServer::slotNewConnection()
+void MyServer::newConnection()
 {
     QTcpSocket* socket = this->nextPendingConnection();
     qDebug() << "Client connected successfully";
-    connect(socket, &QTcpSocket::readyRead, this, &MyServer::slotReadyRead);
-    connect(socket, &QTcpSocket::disconnected, this, &MyServer::slotDisconnected);
+    connect(socket, &QTcpSocket::readyRead, this, &MyServer::readyRead);
+    connect(socket, &QTcpSocket::disconnected, this, &MyServer::disconnected);
 }
 
-void MyServer::slotDisconnected()
+void MyServer::disconnected()
 {
     QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
     if (socket)
@@ -36,7 +36,7 @@ void MyServer::slotDisconnected()
     qDebug() << "Client disconnected";
 }
 
-void MyServer::slotReadyRead()
+void MyServer::readyRead()
 {
     QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
     if (socket)

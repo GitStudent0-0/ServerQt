@@ -1,5 +1,5 @@
-#ifndef MYSERVER_H
-#define MYSERVER_H
+#ifndef SERVER_H
+#define SERVER_H
 #include <QCoreApplication>
 #include <QTcpServer>
 #include <QTcpSocket>
@@ -17,8 +17,8 @@ public:
     void startServer(int port);
 
 private slots:
-    void slotNewConnection();
-    void slotDisconnected();
-    void slotReadyRead();
+  void newConnection();
+  void disconnected();
+  void readyRead();
 };
-#endif // MYSERVER_H
+#endif // SERVER_H
