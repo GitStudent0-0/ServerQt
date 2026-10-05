@@ -1,49 +1,75 @@
 #include "Server.h"
 
-MyServer::MyServer(QObject* parent) : QTcpServer(parent)
+Server::Server(QObject* parent)
+  : QObject(parent)
 {
-  connect(this, &QTcpServer::newConnection, this, &MyServer::newConnection);
+  m_server = new QTcpServer(this);
+  connect(m_server, &QTcpServer::newConnection, this, &Server::newConnection);
 }
 
-MyServer::~MyServer()
+Server::~Server()
 {
-    if (this->isListening())
-    {
-        this->close();
-        qDebug() << "The server closed the connection";
-    }
+  if (m_server->isListening())
+    m_server->close();
 }
 
-void MyServer::startServer(int port)
+void Server::startServer(int port)
 {
-    if (this->listen(QHostAddress::Any, port))
-        qDebug() << "The server is listening on port: "<< port;
+  if (m_server->listen(QHostAddress::Any, port))
+    qDebug() << "The server is listening on port: " << port;
 }
 
-void MyServer::newConnection()
+void Server::newConnection()
 {
-    QTcpSocket* socket = this->nextPendingConnection();
-    qDebug() << "Client connected successfully";
-    connect(socket, &QTcpSocket::readyRead, this, &MyServer::readyRead);
-    connect(socket, &QTcpSocket::disconnected, this, &MyServer::disconnected);
+  QTcpSocket* socket = m_server->nextPendingConnection();
+  qintptr socketDecriptor = socket->socketDescriptor();
+  connect(socket, &QTcpSocket::disconnected, socket, &QTcpSocket::deleteLater);
+  connect(socket, &QTcpSocket::readyRead, this, &Server::readyRead);
+  connect(socket, &QTcpSocket::disconnected, this, &Server::disconnected);
+  sockets.push_back(socket);
+  qDebug() << "Client connected successfully: " << socketDecriptor
+           << "Socket size: " << sockets.size();
 }
 
-void MyServer::disconnected()
+void Server::disconnected()
 {
     QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
     if (socket)
-        socket->deleteLater();
+    {
+      sockets.removeOne(socket);
+      socket->deleteLater();
+    }
     qDebug() << "Client disconnected";
 }
 
-void MyServer::readyRead()
+void Server::readyRead()
 {
-    QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
-    if (socket)
-    {
-        QByteArray data = socket->readAll();
-        QString text = QString::fromUtf8(data);
-        qDebug() << "Client sent a message: " << text;
-    }
+  QTcpSocket* socket = qobject_cast<QTcpSocket*>(sender());
+  if (socket)
+  {
+    QByteArray data = socket->readAll();
+    QString text = QString::fromUtf8(data);
+    qDebug() << "Client sent a message: " << text;
+    socket->write("Server processed: " + data);
+    socket->flush();
+  }
 }
 
+// void Server::readyRead()
+// {
+//   QTcpSocket* socket = qobject_cast<QTcpSocket*>(sender());
+//   if (!socket)
+//     return;
+//   QDataStream in(socket);
+//   in.setVersion(QDataStream::Qt_5_15);
+//   while (true)
+//   {
+//     in.startTransaction();
+//     QString text;
+//     in >> text;
+//     if (in.commitTransaction())
+//       qDebug() << "Client sent a message: " << text;
+//     else
+//       break;
+//   }
+// }

@@ -21,12 +21,11 @@ int main(int argc, char *argv[])
     if (parser.isSet(portOption))
         port = parser.value(portOption).toInt();
 
-
     QString protocol;
     if (parser.isSet(protocolOption))
         protocol = parser.value(protocolOption);
 
-    MyServer* server = new MyServer(qApp);
+    Server* server = new Server(qApp);
     server->startServer(port);
     return a.exec();
 }
