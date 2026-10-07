@@ -4,7 +4,17 @@ Server::Server(QObject* parent)
   : QObject(parent)
 {
   m_server = new QTcpServer(this);
-  connect(m_server, &QTcpServer::newConnection, this, &Server::newConnection);
+  messages << tr("You've been leading a dog's life. Stay off the furniture.")
+           << tr("You've got to think about tomorrow.")
+           << tr("You will be surprised by a loud noise.")
+           << tr("You will feel hungry again in another hour.")
+           << tr("You might have mail.")
+           << tr("You cannot kill time without injuring eternity.")
+           << tr("Computers are not intelligent. They only think they are.");
+  connect(m_server, &QTcpServer::newConnection, this, &Server::sendMessage);
+  QTimer* timer = new QTimer(this);
+  connect(timer, &QTimer::timeout, this, &Server::broadcastMessage);
+  timer->start(3000);
 }
 
 Server::~Server()
@@ -15,61 +25,56 @@ Server::~Server()
 
 void Server::startServer(int port)
 {
-  if (m_server->listen(QHostAddress::Any, port))
-    qDebug() << "The server is listening on port: " << port;
+  if (!m_server->listen(QHostAddress::Any, port))
+  {
+    qCritical() << QString("Server: Unable to start the server: %1.")
+                       .arg(m_server->errorString());
+    m_server->close();
+    return;
+  }
+  qDebug() << "The server is listening on port: " << port;
 }
 
-void Server::newConnection()
+void Server::sendMessage()
 {
+  QByteArray block;
+  QDataStream out(&block, QIODevice::WriteOnly);
+  out.setVersion(QDataStream::Qt_5_15);
+  out << messages[QRandomGenerator::global()->bounded(messages.size())];
   QTcpSocket* socket = m_server->nextPendingConnection();
-  qintptr socketDecriptor = socket->socketDescriptor();
-  connect(socket, &QTcpSocket::disconnected, socket, &QTcpSocket::deleteLater);
-  connect(socket, &QTcpSocket::readyRead, this, &Server::readyRead);
+  if (!socket)
+    return;
+  qintptr socketDescriptor = socket->socketDescriptor();
+  m_sockets.insert(socketDescriptor, socket);
   connect(socket, &QTcpSocket::disconnected, this, &Server::disconnected);
-  sockets.push_back(socket);
-  qDebug() << "Client connected successfully: " << socketDecriptor
-           << "Socket size: " << sockets.size();
+  qDebug() << "Client connected successfully: " << socketDescriptor;
+  socket->write(block);
+}
+
+void Server::broadcastMessage()
+{
+  if (m_sockets.empty())
+    return;
+  for (QTcpSocket* socket : qAsConst(m_sockets))
+  {
+    if (socket->state() == QTcpSocket::ConnectedState)
+    {
+      QByteArray block;
+      QDataStream out(&block, QIODevice::WriteOnly);
+      out.setVersion(QDataStream::Qt_5_15);
+      out << messages[QRandomGenerator::global()->bounded(messages.size())];
+      socket->write(block);
+    }
+  }
 }
 
 void Server::disconnected()
 {
-    QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
-    if (socket)
-    {
-      sockets.removeOne(socket);
-      socket->deleteLater();
-    }
-    qDebug() << "Client disconnected";
-}
-
-void Server::readyRead()
-{
   QTcpSocket* socket = qobject_cast<QTcpSocket*>(sender());
-  if (socket)
-  {
-    QByteArray data = socket->readAll();
-    QString text = QString::fromUtf8(data);
-    qDebug() << "Client sent a message: " << text;
-    socket->write("Server processed: " + data);
-    socket->flush();
-  }
+  if (!socket)
+    return;
+  quint16 socketDescriptor = m_sockets.key(socket);
+  m_sockets.remove(socketDescriptor);
+  socket->deleteLater();
+  qDebug() << "Client disconnected: " << socketDescriptor;
 }
-
-// void Server::readyRead()
-// {
-//   QTcpSocket* socket = qobject_cast<QTcpSocket*>(sender());
-//   if (!socket)
-//     return;
-//   QDataStream in(socket);
-//   in.setVersion(QDataStream::Qt_5_15);
-//   while (true)
-//   {
-//     in.startTransaction();
-//     QString text;
-//     in >> text;
-//     if (in.commitTransaction())
-//       qDebug() << "Client sent a message: " << text;
-//     else
-//       break;
-//   }
-// }
