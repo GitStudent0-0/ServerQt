@@ -1,9 +1,8 @@
 #include "Server.h"
 
 Server::Server(QObject* parent)
-  : QObject(parent)
+  : QTcpServer(parent)
 {
-  m_server = new QTcpServer(this);
   messages << tr("You've been leading a dog's life. Stay off the furniture.")
            << tr("You've got to think about tomorrow.")
            << tr("You will be surprised by a loud noise.")
@@ -11,7 +10,6 @@ Server::Server(QObject* parent)
            << tr("You might have mail.")
            << tr("You cannot kill time without injuring eternity.")
            << tr("Computers are not intelligent. They only think they are.");
-  connect(m_server, &QTcpServer::newConnection, this, &Server::sendMessage);
   QTimer* timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &Server::broadcastMessage);
   timer->start(3000);
@@ -19,62 +17,60 @@ Server::Server(QObject* parent)
 
 Server::~Server()
 {
-  if (m_server->isListening())
-    m_server->close();
+  if (this->isListening())
+    this->close();
 }
 
 void Server::startServer(int port)
 {
-  if (!m_server->listen(QHostAddress::Any, port))
+  if (!this->listen(QHostAddress::Any, port))
   {
     qCritical() << QString("Server: Unable to start the server: %1.")
-                       .arg(m_server->errorString());
-    m_server->close();
+                       .arg(this->errorString());
+    this->close();
     return;
   }
   qDebug() << "The server is listening on port: " << port;
 }
 
-void Server::sendMessage()
+void Server::incomingConnection(qintptr socketDescriptor)
 {
-  QByteArray block;
-  QDataStream out(&block, QIODevice::WriteOnly);
-  out.setVersion(QDataStream::Qt_5_15);
-  out << messages[QRandomGenerator::global()->bounded(messages.size())];
-  QTcpSocket* socket = m_server->nextPendingConnection();
-  if (!socket)
-    return;
-  qintptr socketDescriptor = socket->socketDescriptor();
-  m_sockets.insert(socketDescriptor, socket);
-  connect(socket, &QTcpSocket::disconnected, this, &Server::disconnected);
+  QString message = messages[QRandomGenerator::global()->bounded(messages.size())];
   qDebug() << "Client connected successfully: " << socketDescriptor;
-  socket->write(block);
+  QThread* thread = new QThread(this);
+  ClientWorker* worker = new ClientWorker(socketDescriptor);
+  worker->moveToThread(thread);
+  m_workers.push_back(worker);
+  connect(worker, &ClientWorker::finished, this, &Server::disconnected);
+  connect(worker, &ClientWorker::error, this, &Server::error);
+  connect(thread, &QThread::started, worker, &ClientWorker::process);
+  connect(worker, &ClientWorker::finished, thread, &QThread::quit);
+  connect(worker, &ClientWorker::finished, worker, &ClientWorker::deleteLater);
+  connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+  thread->start();
 }
 
 void Server::broadcastMessage()
 {
-  if (m_sockets.empty())
+  if (m_workers.empty())
     return;
-  for (QTcpSocket* socket : qAsConst(m_sockets))
+  for (ClientWorker* worker : qAsConst(m_workers))
   {
-    if (socket->state() == QTcpSocket::ConnectedState)
-    {
-      QByteArray block;
-      QDataStream out(&block, QIODevice::WriteOnly);
-      out.setVersion(QDataStream::Qt_5_15);
-      out << messages[QRandomGenerator::global()->bounded(messages.size())];
-      socket->write(block);
-    }
+    QByteArray block;
+    QDataStream out(&block, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_15);
+    out << messages[QRandomGenerator::global()->bounded(messages.size())];
+    QMetaObject::invokeMethod(worker, "sendMessage", Qt::QueuedConnection,
+                              Q_ARG(QByteArray, block));
   }
 }
 
+void Server::error(const QString& errorMsg) { qDebug() << "Error: " << errorMsg; }
+
 void Server::disconnected()
 {
-  QTcpSocket* socket = qobject_cast<QTcpSocket*>(sender());
-  if (!socket)
+  ClientWorker* worker = qobject_cast<ClientWorker*>(sender());
+  if (!worker)
     return;
-  quint16 socketDescriptor = m_sockets.key(socket);
-  m_sockets.remove(socketDescriptor);
-  socket->deleteLater();
-  qDebug() << "Client disconnected: " << socketDescriptor;
+  m_workers.removeAll(worker);
 }
