@@ -37,15 +37,15 @@ void Server::incomingConnection(qintptr socketDescriptor)
 {
   QString message = messages[QRandomGenerator::global()->bounded(messages.size())];
   qDebug() << "Client connected successfully: " << socketDescriptor;
-  QThread* thread = new QThread(this);
+  QThread* thread = new QThread();
   ClientWorker* worker = new ClientWorker(socketDescriptor);
   worker->moveToThread(thread);
   m_workers.push_back(worker);
   connect(worker, &ClientWorker::finished, this, &Server::disconnected);
+  connect(this, &Server::sendMessageToWorker, worker, &ClientWorker::sendMessage);
   connect(worker, &ClientWorker::error, this, &Server::error);
   connect(thread, &QThread::started, worker, &ClientWorker::process);
   connect(worker, &ClientWorker::finished, thread, &QThread::quit);
-  connect(worker, &ClientWorker::finished, worker, &ClientWorker::deleteLater);
   connect(thread, &QThread::finished, thread, &QThread::deleteLater);
   thread->start();
 }
@@ -60,8 +60,7 @@ void Server::broadcastMessage()
     QDataStream out(&block, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_15);
     out << messages[QRandomGenerator::global()->bounded(messages.size())];
-    QMetaObject::invokeMethod(worker, "sendMessage", Qt::QueuedConnection,
-                              Q_ARG(QByteArray, block));
+    emit sendMessageToWorker(worker, block);
   }
 }
 
@@ -73,4 +72,5 @@ void Server::disconnected()
   if (!worker)
     return;
   m_workers.removeAll(worker);
+  worker->deleteLater();
 }

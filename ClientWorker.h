@@ -7,20 +7,22 @@
 class ClientWorker : public QObject
 {
   Q_OBJECT
-  QTcpSocket* socket;
-  quint16 socketDescriptor;
 
 public:
   ClientWorker(quint16 socketDescriptor);
-  ~ClientWorker() {};
+  ~ClientWorker();
 public slots:
   void process();
-  void sendMessage(const QByteArray& block);
+  void sendMessage(ClientWorker* target, const QByteArray& block);
   void disconnected();
 private slots:
 signals:
   void finished();
   void error(QString err);
+
+private:
+  QTcpSocket* m_socket;
+  quint16 socketDescriptor;
 };
 
 #endif // CLIENTWORKER_H

@@ -16,8 +16,6 @@
 class Server : public QTcpServer
 {
     Q_OBJECT
-    QVector<QString> messages;
-    QVector<ClientWorker*> m_workers;
 
   protected:
     void incomingConnection(qintptr socketDescriptor) override;
@@ -27,10 +25,14 @@ class Server : public QTcpServer
     ~Server();
     void startServer(int port);
   signals:
-    void sendMessageToWorker(const QByteArray& block);
+    void sendMessageToWorker(ClientWorker* target, const QByteArray& block);
   private slots:
     void broadcastMessage();
     void error(const QString& errorMsg);
     void disconnected();
+
+  private:
+    QVector<QString> messages;
+    QVector<ClientWorker*> m_workers;
 };
 #endif // SERVER_H

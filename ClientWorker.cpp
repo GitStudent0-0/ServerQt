@@ -4,20 +4,24 @@ ClientWorker::ClientWorker(quint16 socketDescriptor)
   : socketDescriptor(socketDescriptor)
 {}
 
+ClientWorker::~ClientWorker() {}
+
 void ClientWorker::process()
 {
-  socket = new QTcpSocket(this);
-  if (!socket->setSocketDescriptor(socketDescriptor))
+  m_socket = new QTcpSocket(this);
+  if (!m_socket->setSocketDescriptor(socketDescriptor))
     return;
   qDebug() << "Current thread ID: " << QThread::currentThreadId();
-  connect(socket, &QTcpSocket::disconnected, this, &ClientWorker::disconnected);
+  connect(m_socket, &QTcpSocket::disconnected, this, &ClientWorker::disconnected);
   return;
 }
 
-void ClientWorker::sendMessage(const QByteArray& block)
+void ClientWorker::sendMessage(ClientWorker* target, const QByteArray& block)
 {
-  if (socket && socket->isOpen())
-    socket->write(block);
+  if (target != this)
+    return;
+  if (m_socket && m_socket->isOpen())
+    m_socket->write(block);
 }
 
 void ClientWorker::disconnected()
