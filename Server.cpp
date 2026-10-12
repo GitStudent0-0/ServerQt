@@ -10,9 +10,7 @@ Server::Server(QObject* parent)
            << tr("You might have mail.")
            << tr("You cannot kill time without injuring eternity.")
            << tr("Computers are not intelligent. They only think they are.");
-  QTimer* timer = new QTimer(this);
-  connect(timer, &QTimer::timeout, this, &Server::broadcastMessage);
-  timer->start(3000);
+  startTimer(5000);
 }
 
 Server::~Server()
@@ -50,7 +48,7 @@ void Server::incomingConnection(qintptr socketDescriptor)
   thread->start();
 }
 
-void Server::broadcastMessage()
+void Server::timerEvent(QTimerEvent* event)
 {
   if (m_workers.empty())
     return;

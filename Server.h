@@ -6,12 +6,12 @@
 #include <QDebug>
 #include <QHash>
 #include <QHostAddress>
+#include <QLoggingCategory>
 #include <QObject>
 #include <QRandomGenerator>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QThread>
-#include <QTimer>
 #include <QVector>
 class Server : public QTcpServer
 {
@@ -24,10 +24,12 @@ class Server : public QTcpServer
     explicit Server(QObject* parent);
     ~Server();
     void startServer(int port);
+
+  protected:
+    void timerEvent(QTimerEvent* event) override;
   signals:
     void sendMessageToWorker(ClientWorker* target, const QByteArray& block);
   private slots:
-    void broadcastMessage();
     void error(const QString& errorMsg);
     void disconnected();
 
