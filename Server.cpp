@@ -2,6 +2,7 @@
 
 Server::Server(QObject* parent)
   : QTcpServer(parent)
+  , m_logger(Logger::getInstance(LOG4CPLUS_TEXT("Server")))
 {
   messages << tr("You've been leading a dog's life. Stay off the furniture.")
            << tr("You've got to think about tomorrow.")

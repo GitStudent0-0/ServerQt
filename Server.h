@@ -12,6 +12,11 @@
 #include <QTcpSocket>
 #include <QThread>
 #include <QVector>
+#include <log4cplus/configurator.h>
+#include <log4cplus/initializer.h>
+#include <log4cplus/logger.h>
+#include <log4cplus/loggingmacros.h>
+using namespace log4cplus;
 class Server : public QTcpServer
 {
     Q_OBJECT
@@ -35,5 +40,6 @@ class Server : public QTcpServer
   private:
     QVector<QString> messages;
     QVector<ClientWorker*> m_workers;
+    Logger m_logger;
 };
 #endif // SERVER_H

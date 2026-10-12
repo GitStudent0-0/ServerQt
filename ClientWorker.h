@@ -1,12 +1,15 @@
 #ifndef CLIENTWORKER_H
 #define CLIENTWORKER_H
-#include <QDateTime>
 #include <QDebug>
-#include <QFile>
 #include <QObject>
 #include <QTcpSocket>
 #include <QTextStream>
 #include <QThread>
+#include <log4cplus/configurator.h>
+#include <log4cplus/initializer.h>
+#include <log4cplus/logger.h>
+#include <log4cplus/loggingmacros.h>
+using namespace log4cplus;
 class ClientWorker : public QObject
 {
   Q_OBJECT
@@ -26,6 +29,7 @@ signals:
 private:
   QTcpSocket* m_socket;
   quint16 socketDescriptor;
+  Logger m_logger = Logger::getInstance(LOG4CPLUS_TEXT("ClientWorker"));
 };
 
 #endif // CLIENTWORKER_H

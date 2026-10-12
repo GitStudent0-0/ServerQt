@@ -7,7 +7,8 @@
 #include <QString>
 #include <QTcpServer>
 
-int main(int argc, char *argv[])
+using namespace log4cplus;
+int main(int argc, char* argv[])
 {
     QCoreApplication a(argc, argv);
     QCommandLineParser parser;
@@ -27,6 +28,5 @@ int main(int argc, char *argv[])
 
     Server* server = new Server(qApp);
     server->startServer(port);
-
     return a.exec();
 }
