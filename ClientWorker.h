@@ -1,8 +1,11 @@
 #ifndef CLIENTWORKER_H
 #define CLIENTWORKER_H
+#include <QDateTime>
 #include <QDebug>
+#include <QFile>
 #include <QObject>
 #include <QTcpSocket>
+#include <QTextStream>
 #include <QThread>
 class ClientWorker : public QObject
 {

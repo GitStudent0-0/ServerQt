@@ -6,7 +6,6 @@
 #include <QDebug>
 #include <QHash>
 #include <QHostAddress>
-#include <QLoggingCategory>
 #include <QObject>
 #include <QRandomGenerator>
 #include <QTcpServer>

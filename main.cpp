@@ -27,5 +27,6 @@ int main(int argc, char *argv[])
 
     Server* server = new Server(qApp);
     server->startServer(port);
+
     return a.exec();
 }
