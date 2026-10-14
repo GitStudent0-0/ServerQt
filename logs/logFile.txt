@@ -1,8 +1,0 @@
-2026-10-12 17:08:36.236 [CONSTRUCTOR] Memory allocated: 0x5dc734f9aaf0 Current thread ID: 0x7da2d76907c0
-2026-10-12 17:08:36.236 [PROCESS] Memory allocated: 0x7da2cc001290 Current thread ID: 0x7da2d43ff6c0
-2026-10-12 17:08:38.532 [CONSTRUCTOR] Memory allocated: 0x5dc734f9be00 Current thread ID: 0x7da2d76907c0
-2026-10-12 17:08:38.532 [PROCESS] Memory allocated: 0x7da2c4001290 Current thread ID: 0x7da2d3bfe6c0
-2026-10-12 17:08:49.000 [DESTRUCTOR] Memory freed: 0x5dc734f9aaf0 Current thread ID: 0x7da2d43ff6c0
-2026-10-12 17:08:49.000 [DELETE m_socket] Memory freed: 0x0 Current thread ID: 0x7da2d43ff6c0
-2026-10-12 17:08:50.880 [DESTRUCTOR] Memory freed: 0x5dc734f9be00 Current thread ID: 0x7da2d3bfe6c0
-2026-10-12 17:08:50.880 [DELETE m_socket] Memory freed: 0x0 Current thread ID: 0x7da2d3bfe6c0

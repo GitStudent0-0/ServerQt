@@ -2,7 +2,7 @@
 
 Server::Server(QObject* parent)
   : QTcpServer(parent)
-  , m_logger(Logger::getInstance(LOG4CPLUS_TEXT("Server")))
+  , m_logger(Logger::getInstance("Server"))
 {
   messages << tr("You've been leading a dog's life. Stay off the furniture.")
            << tr("You've got to think about tomorrow.")
@@ -12,10 +12,13 @@ Server::Server(QObject* parent)
            << tr("You cannot kill time without injuring eternity.")
            << tr("Computers are not intelligent. They only think they are.");
   startTimer(5000);
+  LOG4CPLUS_DEBUG(m_logger, "Server created");
 }
 
 Server::~Server()
 {
+  LOG4CPLUS_DEBUG(m_logger, "Server closed");
+
   if (this->isListening())
     this->close();
 }
@@ -24,18 +27,18 @@ void Server::startServer(int port)
 {
   if (!this->listen(QHostAddress::Any, port))
   {
-    qCritical() << QString("Server: Unable to start the server: %1.")
-                       .arg(this->errorString());
+    LOG4CPLUS_ERROR(m_logger, "Server: Unable to start the server: "
+                                  << this->errorString().toStdString());
     this->close();
     return;
   }
-  qDebug() << "The server is listening on port: " << port;
+  LOG4CPLUS_DEBUG(m_logger, "The server is listening on port: " << port);
 }
 
 void Server::incomingConnection(qintptr socketDescriptor)
 {
   QString message = messages[QRandomGenerator::global()->bounded(messages.size())];
-  qDebug() << "Client connected successfully: " << socketDescriptor;
+  LOG4CPLUS_DEBUG(m_logger, "Client connected successfully: " << socketDescriptor);
   QThread* thread = new QThread();
   ClientWorker* worker = new ClientWorker(socketDescriptor);
   worker->moveToThread(thread);
@@ -63,7 +66,10 @@ void Server::timerEvent(QTimerEvent* event)
   }
 }
 
-void Server::error(const QString& errorMsg) { qDebug() << "Error: " << errorMsg; }
+void Server::error(const QString& errorMsg)
+{
+  LOG4CPLUS_ERROR(m_logger, "Error: " << errorMsg.toStdString());
+}
 
 void Server::disconnected()
 {

@@ -21,3 +21,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
   ClientWorker.h \
   Server.h
+
+config_files.files = $$_PRO_FILE_PWD_/log4cplus.properties
+config_files.path = $$OUT_PWD
+COPIES += config_files
+

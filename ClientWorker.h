@@ -5,8 +5,6 @@
 #include <QTcpSocket>
 #include <QTextStream>
 #include <QThread>
-#include <log4cplus/configurator.h>
-#include <log4cplus/initializer.h>
 #include <log4cplus/logger.h>
 #include <log4cplus/loggingmacros.h>
 using namespace log4cplus;
@@ -29,7 +27,7 @@ signals:
 private:
   QTcpSocket* m_socket;
   quint16 socketDescriptor;
-  Logger m_logger = Logger::getInstance(LOG4CPLUS_TEXT("ClientWorker"));
+  Logger m_logger;
 };
 
 #endif // CLIENTWORKER_H

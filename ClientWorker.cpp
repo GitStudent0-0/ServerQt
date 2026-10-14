@@ -2,42 +2,22 @@
 
 ClientWorker::ClientWorker(quint16 socketDescriptor)
   : socketDescriptor(socketDescriptor)
-  , m_logger(Logger::getInstance(LOG4CPLUS_TEXT("ClientWorker")))
+  , m_logger(Logger::getInstance("ClientWorker"))
 {
   m_socket = nullptr;
-  // QFile logFile("/home/marina/Server/logs/logFile.txt");
-  // if (logFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append))
-  // {
-  //   QTextStream out(&logFile);
-  //   out << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz ")
-  //       << "[CONSTRUCTOR] Memory allocated: " << this
-  //       << " Current thread ID: " << QThread::currentThreadId() << Qt::endl;
-  // }
+  LOG4CPLUS_DEBUG(m_logger, "Memory allocated: " << this << " Current thread ID:"
+                                                 << QThread::currentThreadId());
 }
 
 ClientWorker::~ClientWorker()
 {
-  // QFile logFile("/home/marina/Server/logs/logFile.txt");
-  // if (logFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append))
-  // {
-  //   QTextStream out(&logFile);
-  //   out << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz ")
-  //       << "[DESTRUCTOR] Memory freed: " << this
-  //       << " Current thread ID: " << QThread::currentThreadId() << Qt::endl;
-  // }
+  LOG4CPLUS_DEBUG(m_logger, "Memory freed: " << this << " Current thread ID:"
+                                             << QThread::currentThreadId());
   delete m_socket;
   m_socket = nullptr;
-  // if (!m_socket)
-  // {
-  //   QFile logFile("/home/marina/Server/logs/logFile.txt");
-  //   if (logFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append))
-  //   {
-  //     QTextStream out(&logFile);
-  //     out << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz ")
-  //         << "[DELETE m_socket] Memory freed: " << m_socket
-  //         << " Current thread ID: " << QThread::currentThreadId() << Qt::endl;
-  //   }
-  // }
+  if (!m_socket)
+    LOG4CPLUS_DEBUG(m_logger, "Memory freed: " << m_socket << " Current thread ID:"
+                                               << QThread::currentThreadId());
 }
 
 void ClientWorker::process()
@@ -45,15 +25,9 @@ void ClientWorker::process()
   m_socket = new QTcpSocket();
   if (m_socket && m_socket->setSocketDescriptor(socketDescriptor))
   {
-    // QFile logFile("/home/marina/Server/logs/logFile.txt");
-    // if (logFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append))
-    // {
-    //   QTextStream out(&logFile);
-    //   out << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz ")
-    //       << "[PROCESS] Memory allocated: " << m_socket
-    //       << " Current thread ID: " << QThread::currentThreadId() << Qt::endl;
-    // }
-    qDebug() << " Current thread ID: " << QThread::currentThreadId();
+    LOG4CPLUS_DEBUG(m_logger, "Memory allocated: " << m_socket
+                                                   << " Current thread ID:"
+                                                   << QThread::currentThreadId());
     connect(m_socket, &QTcpSocket::disconnected, this, &ClientWorker::disconnected);
   }
   return;
@@ -69,7 +43,8 @@ void ClientWorker::sendMessage(ClientWorker* target, const QByteArray& block)
 
 void ClientWorker::disconnected()
 {
-  qDebug() << "Client disconnected descriptor: " << socketDescriptor
-           << "thread ID: " << QThread::currentThreadId();
+  LOG4CPLUS_DEBUG(m_logger, "Client disconnected descriptor: "
+                                << socketDescriptor
+                                << " thread ID: " << QThread::currentThreadId());
   emit finished();
 }
