@@ -17,10 +17,12 @@ Server::Server(QObject* parent)
 
 Server::~Server()
 {
-  LOG4CPLUS_DEBUG(m_logger, "Server closed");
-
   if (this->isListening())
+  {
     this->close();
+    this->deleteLater();
+  }
+  LOG4CPLUS_DEBUG(m_logger, "Server closed");
 }
 
 void Server::startServer(int port)
