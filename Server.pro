@@ -20,8 +20,10 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
   ClientWorker.h \
-  Server.h
+  Server.h \
 
+INCLUDEPATH += $$PWD/../CommunicationProtocols
+LIBS += -L$$PWD/../build-MyLib-Release/ -lCommunicationProtocols
 config_files.files = $$_PRO_FILE_PWD_/log4cplus.properties
 config_files.path = $$OUT_PWD
 COPIES += config_files

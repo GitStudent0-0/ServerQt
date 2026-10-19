@@ -1,5 +1,8 @@
 #ifndef CLIENTWORKER_H
 #define CLIENTWORKER_H
+#include "CommandStart.h"
+#include "JsonDecoder.h"
+#include "JsonEncoder.h"
 #include <QDebug>
 #include <QObject>
 #include <QTcpSocket>
@@ -19,10 +22,13 @@ public slots:
   void process();
   void sendMessage(ClientWorker* target, const QByteArray& block);
   void disconnected();
+  void readyRead();
+
 private slots:
 signals:
   void finished();
   void error(QString err);
+  void commandMessage();
 
 private:
   QTcpSocket* m_socket;

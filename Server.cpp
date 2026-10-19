@@ -25,8 +25,9 @@ Server::~Server()
   LOG4CPLUS_DEBUG(m_logger, "Server closed");
 }
 
-void Server::startServer(int port)
+void Server::startServer(int port, QString protocol)
 {
+  m_protocol = protocol;
   if (!this->listen(QHostAddress::Any, port))
   {
     LOG4CPLUS_ERROR(m_logger, "Server: Unable to start the server: "
@@ -35,6 +36,12 @@ void Server::startServer(int port)
     return;
   }
   LOG4CPLUS_DEBUG(m_logger, "The server is listening on port: " << port);
+}
+
+CommandStart Server::createMessage()
+{
+  int random_id = QRandomGenerator::global()->bounded(0, 100);
+  CommandStart commandMessage(2, random_id, )
 }
 
 void Server::incomingConnection(qintptr socketDescriptor)

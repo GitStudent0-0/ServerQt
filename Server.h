@@ -1,10 +1,12 @@
 #ifndef SERVER_H
 #define SERVER_H
 #include "ClientWorker.h"
+#include "CommandStart.h"
+#include "JsonDecoder.h"
+#include "JsonEncoder.h"
 #include <QCoreApplication>
 #include <QDataStream>
 #include <QDebug>
-#include <QHash>
 #include <QHostAddress>
 #include <QObject>
 #include <QRandomGenerator>
@@ -25,12 +27,14 @@ class Server : public QTcpServer
   public:
     explicit Server(QObject* parent);
     ~Server();
-    void startServer(int port);
+    void startServer(int port, QString protocol);
+    CommandStart createMessage();
 
   protected:
     void timerEvent(QTimerEvent* event) override;
   signals:
     void sendMessageToWorker(ClientWorker* target, const QByteArray& block);
+    void sendCommandToWorker(ClientWorker* target, const CommandStart& command);
   private slots:
     void error(const QString& errorMsg);
     void disconnected();
@@ -39,5 +43,6 @@ class Server : public QTcpServer
     QVector<QString> messages;
     QVector<ClientWorker*> m_workers;
     Logger m_logger;
+    QString m_protocol = "";
 };
 #endif // SERVER_H

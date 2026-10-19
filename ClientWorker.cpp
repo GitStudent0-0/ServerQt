@@ -48,3 +48,13 @@ void ClientWorker::disconnected()
                                 << " thread ID: " << QThread::currentThreadId());
   emit finished();
 }
+
+void ClientWorker::readyRead()
+{
+  CommandStart command;
+  QByteArray data = m_socket->readAll();
+  JsonDecoder decoder;
+  bool succes = decoder.readJson(data, command);
+  if (succes && command.getCMDType() == 1)
+    emit sendMessage();
+}
