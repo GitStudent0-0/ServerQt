@@ -28,13 +28,9 @@ class Server : public QTcpServer
     explicit Server(QObject* parent);
     ~Server();
     void startServer(int port, QString protocol);
-    CommandStart createMessage();
-
-  protected:
-    void timerEvent(QTimerEvent* event) override;
   signals:
-    void sendMessageToWorker(ClientWorker* target, const QByteArray& block);
-    void sendCommandToWorker(ClientWorker* target, const CommandStart& command);
+    // void sendMessageToWorker(ClientWorker* target, const QByteArray& block);
+    void sendMessageToWorker(ClientWorker* target, const CommandStart& command);
   private slots:
     void error(const QString& errorMsg);
     void disconnected();

@@ -23,8 +23,9 @@ HEADERS += \
   Server.h \
 
 INCLUDEPATH += $$PWD/../CommunicationProtocols
-LIBS += -L$$PWD/../build-MyLib-Release/ -lCommunicationProtocols
-config_files.files = $$_PRO_FILE_PWD_/log4cplus.properties
+LIBS += -L$$PWD/../CommunicationProtocols/lib -lCommunicationProtocols
+
+config_files.files = log4cplus.properties
 config_files.path = $$OUT_PWD
 COPIES += config_files
 

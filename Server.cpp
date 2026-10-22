@@ -11,7 +11,6 @@ Server::Server(QObject* parent)
            << tr("You might have mail.")
            << tr("You cannot kill time without injuring eternity.")
            << tr("Computers are not intelligent. They only think they are.");
-  startTimer(5000);
   LOG4CPLUS_DEBUG(m_logger, "Server created");
 }
 
@@ -38,12 +37,6 @@ void Server::startServer(int port, QString protocol)
   LOG4CPLUS_DEBUG(m_logger, "The server is listening on port: " << port);
 }
 
-CommandStart Server::createMessage()
-{
-  int random_id = QRandomGenerator::global()->bounded(0, 100);
-  CommandStart commandMessage(2, random_id, )
-}
-
 void Server::incomingConnection(qintptr socketDescriptor)
 {
   QString message = messages[QRandomGenerator::global()->bounded(messages.size())];
@@ -53,7 +46,7 @@ void Server::incomingConnection(qintptr socketDescriptor)
   worker->moveToThread(thread);
   m_workers.push_back(worker);
   connect(worker, &ClientWorker::finished, this, &Server::disconnected);
-  connect(this, &Server::sendMessageToWorker, worker, &ClientWorker::sendMessage);
+  // connect(this, &Server::sendMessageToWorker, worker, &ClientWorker::sendMessage);
   connect(worker, &ClientWorker::error, this, &Server::error);
   connect(thread, &QThread::started, worker, &ClientWorker::process);
   connect(worker, &ClientWorker::finished, thread, &QThread::quit);
@@ -61,19 +54,19 @@ void Server::incomingConnection(qintptr socketDescriptor)
   thread->start();
 }
 
-void Server::timerEvent(QTimerEvent* event)
-{
-  if (m_workers.empty())
-    return;
-  for (ClientWorker* worker : qAsConst(m_workers))
-  {
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_15);
-    out << messages[QRandomGenerator::global()->bounded(messages.size())];
-    emit sendMessageToWorker(worker, block);
-  }
-}
+// void Server::timerEvent(QTimerEvent* event)
+// {
+//   if (m_workers.empty())
+//     return;
+//   for (ClientWorker* worker : qAsConst(m_workers))
+//   {
+//     QByteArray block;
+//     QDataStream out(&block, QIODevice::WriteOnly);
+//     out.setVersion(QDataStream::Qt_5_15);
+//     out << messages[QRandomGenerator::global()->bounded(messages.size())];
+//     emit sendMessageToWorker(worker, block);
+//   }
+// }
 
 void Server::error(const QString& errorMsg)
 {

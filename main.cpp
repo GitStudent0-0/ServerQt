@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     protocol = parser.value(protocolOption);
 
   Server* server = new Server(qApp);
-  server->startServer(port);
+  server->startServer(port, protocol);
 
   return a.exec();
 }

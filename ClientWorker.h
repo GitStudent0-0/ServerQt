@@ -1,13 +1,12 @@
 #ifndef CLIENTWORKER_H
 #define CLIENTWORKER_H
-#include "CommandStart.h"
-#include "JsonDecoder.h"
-#include "JsonEncoder.h"
 #include <QDebug>
 #include <QObject>
 #include <QTcpSocket>
 #include <QTextStream>
 #include <QThread>
+#include <climits>
+#include <cmath>
 #include <log4cplus/logger.h>
 #include <log4cplus/loggingmacros.h>
 using namespace log4cplus;
@@ -18,22 +17,29 @@ class ClientWorker : public QObject
 public:
   ClientWorker(quint16 socketDescriptor);
   ~ClientWorker();
+
+protected:
+  void timerEvent(QTimerEvent* event) override;
 public slots:
   void process();
-  void sendMessage(ClientWorker* target, const QByteArray& block);
+  void sendMessage();
   void disconnected();
   void readyRead();
+  void stopMessage();
 
 private slots:
 signals:
   void finished();
   void error(QString err);
   void commandMessage();
+  void commandStop();
 
 private:
   QTcpSocket* m_socket;
   quint16 socketDescriptor;
   Logger m_logger;
+  int m_sizePacket;
+  int m_timerId = 1;
 };
 
 #endif // CLIENTWORKER_H
