@@ -46,27 +46,12 @@ void Server::incomingConnection(qintptr socketDescriptor)
   worker->moveToThread(thread);
   m_workers.push_back(worker);
   connect(worker, &ClientWorker::finished, this, &Server::disconnected);
-  // connect(this, &Server::sendMessageToWorker, worker, &ClientWorker::sendMessage);
   connect(worker, &ClientWorker::error, this, &Server::error);
   connect(thread, &QThread::started, worker, &ClientWorker::process);
   connect(worker, &ClientWorker::finished, thread, &QThread::quit);
   connect(thread, &QThread::finished, thread, &QThread::deleteLater);
   thread->start();
 }
-
-// void Server::timerEvent(QTimerEvent* event)
-// {
-//   if (m_workers.empty())
-//     return;
-//   for (ClientWorker* worker : qAsConst(m_workers))
-//   {
-//     QByteArray block;
-//     QDataStream out(&block, QIODevice::WriteOnly);
-//     out.setVersion(QDataStream::Qt_5_15);
-//     out << messages[QRandomGenerator::global()->bounded(messages.size())];
-//     emit sendMessageToWorker(worker, block);
-//   }
-// }
 
 void Server::error(const QString& errorMsg)
 {

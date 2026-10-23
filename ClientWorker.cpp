@@ -51,9 +51,9 @@ void ClientWorker::timerEvent(QTimerEvent* event)
     double x = start + i * step;
     data[i] = std::sin(x);
   }
-  CommandMessage message(CMDType::MESSAGE, m_sizePacket, data);
+  CommandMessage cmdMessage(CMDType::MESSAGE, m_sizePacket, data);
   JsonEncoder encoder;
-  QByteArray dataMessage = encoder.writeJson(message);
+  QByteArray dataMessage = encoder.writeJson(cmdMessage);
   m_socket->write(dataMessage);
 }
 
@@ -71,19 +71,40 @@ void ClientWorker::disconnected()
 
 void ClientWorker::readyRead()
 {
-  CommandStart command;
-  QByteArray data = m_socket->readAll();
-  JsonDecoder decoder;
-  bool succes = decoder.readJson(data, command);
-  if (succes && command.getCMDType() == CMDType::START)
-  {
-    m_sizePacket = command.getCount();
-    command.toDebug(qDebug());
-    emit commandMessage();
-  }
-  else if (succes && command.getCMDType() == CMDType::STOP)
-  {
-    command.toDebug(qDebug());
-    emit commandStop();
-  }
+  // QByteArray data = m_socket->readAll();
+  // JsonDecoder decoder;
+  // QJsonObject jsonDoc;
+  // bool succes = decoder.parseToRawObject(data, jsonDoc);
+  // CMDType type = static_cast<CMDType>(jsonDoc["CMDType"].toInt());
+  // switch (type)
+  // {
+  // case CMDType::START:
+  // {
+  //   CommandStart cmdStart;
+  //   if (decoder.readJson(jsonDoc, cmdStart))
+  //   {
+  //     m_sizePacket = cmdStart.getCount();
+  //     cmdStart.toDebug(qDebug());
+  //     emit commandMessage();
+  //   }
+  //   break;
+  // }
+  // case CMDType::STOP:
+  // {
+  //   CommandStop cmdStop;
+  //   if (decoder.readJson(jsonDoc, cmdStop))
+  //   {
+  //     // Тут вызываем геттеры, уникальные ТОЛЬКО для команды STOP
+  //     cmdStop.toDebug(qDebug());
+  //   }
+  //   break;
+  // }
+  // }
+
+  // if (succes && cmdStart.getCMDType() == CMDType::START)
+  // {
+  //   m_sizePacket = cmdStart.getCount();
+  //   cmdStart.toDebug(qDebug());
+  //   emit commandMessage();
+  // }
 }

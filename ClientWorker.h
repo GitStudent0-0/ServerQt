@@ -1,6 +1,8 @@
 #ifndef CLIENTWORKER_H
 #define CLIENTWORKER_H
 #include <QDebug>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QObject>
 #include <QTcpSocket>
 #include <QTextStream>
@@ -39,7 +41,7 @@ private:
   quint16 socketDescriptor;
   Logger m_logger;
   int m_sizePacket;
-  int m_timerId = 1;
+  int m_timerId;
 };
 
 #endif // CLIENTWORKER_H
