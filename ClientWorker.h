@@ -42,6 +42,7 @@ private:
   Logger m_logger;
   int m_sizePacket;
   int m_timerId;
+  double m_currentX = static_cast<double>(INT_MIN);
 };
 
 #endif // CLIENTWORKER_H

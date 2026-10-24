@@ -41,15 +41,14 @@ void ClientWorker::process()
 
 void ClientWorker::timerEvent(QTimerEvent* event)
 {
-
   double start = static_cast<double>(INT_MIN);
   double end = static_cast<double>(INT_MAX);
   double step = (end - start) / (m_sizePacket - 1);
   QVector<double> data(m_sizePacket);
   for (int i = 0; i < m_sizePacket; i++)
   {
-    double x = start + i * step;
-    data[i] = std::sin(x);
+    data[i] = sin(m_currentX);
+    m_currentX += step;
   }
   CommandMessage cmdMessage(CMDType::MESSAGE, m_sizePacket, data);
   JsonEncoder encoder;
@@ -71,40 +70,35 @@ void ClientWorker::disconnected()
 
 void ClientWorker::readyRead()
 {
-  // QByteArray data = m_socket->readAll();
-  // JsonDecoder decoder;
-  // QJsonObject jsonDoc;
-  // bool succes = decoder.parseToRawObject(data, jsonDoc);
-  // CMDType type = static_cast<CMDType>(jsonDoc["CMDType"].toInt());
-  // switch (type)
-  // {
-  // case CMDType::START:
-  // {
-  //   CommandStart cmdStart;
-  //   if (decoder.readJson(jsonDoc, cmdStart))
-  //   {
-  //     m_sizePacket = cmdStart.getCount();
-  //     cmdStart.toDebug(qDebug());
-  //     emit commandMessage();
-  //   }
-  //   break;
-  // }
-  // case CMDType::STOP:
-  // {
-  //   CommandStop cmdStop;
-  //   if (decoder.readJson(jsonDoc, cmdStop))
-  //   {
-  //     // Тут вызываем геттеры, уникальные ТОЛЬКО для команды STOP
-  //     cmdStop.toDebug(qDebug());
-  //   }
-  //   break;
-  // }
-  // }
-
-  // if (succes && cmdStart.getCMDType() == CMDType::START)
-  // {
-  //   m_sizePacket = cmdStart.getCount();
-  //   cmdStart.toDebug(qDebug());
-  //   emit commandMessage();
-  // }
+  QByteArray data = m_socket->readAll();
+  JsonDecoder decoder;
+  QJsonObject jsonDoc;
+  if (decoder.parseToRawObject(data, jsonDoc))
+  {
+    CMDType type = static_cast<CMDType>(jsonDoc["CMDType"].toInt());
+    switch (type)
+    {
+    case CMDType::START:
+    {
+      CommandStart cmdStart;
+      if (decoder.readJson(jsonDoc, cmdStart))
+      {
+        m_sizePacket = cmdStart.getCount();
+        cmdStart.toDebug(qDebug());
+        emit commandMessage();
+      }
+      break;
+    }
+    case CMDType::STOP:
+    {
+      Command cmdStop;
+      if (decoder.readJson(jsonDoc, cmdStop))
+      {
+        cmdStop.toDebug(qDebug());
+        emit commandStop();
+      }
+      break;
+    }
+    }
+  }
 }
