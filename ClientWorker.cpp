@@ -1,8 +1,7 @@
 #include "ClientWorker.h"
-#include "CommandMessage.h"
-#include "CommandStart.h"
 #include "JsonDecoder.h"
 #include "JsonEncoder.h"
+
 ClientWorker::ClientWorker(quint16 socketDescriptor)
   : socketDescriptor(socketDescriptor)
   , m_logger(Logger::getInstance("ClientWorker"))
@@ -39,27 +38,6 @@ void ClientWorker::process()
   return;
 }
 
-void ClientWorker::timerEvent(QTimerEvent* event)
-{
-  double start = static_cast<double>(INT_MIN);
-  double end = static_cast<double>(INT_MAX);
-  double step = (end - start) / (m_sizePacket - 1);
-  QVector<double> data(m_sizePacket);
-  for (int i = 0; i < m_sizePacket; i++)
-  {
-    data[i] = sin(m_currentX);
-    m_currentX += step;
-  }
-  CommandMessage cmdMessage(CMDType::MESSAGE, m_sizePacket, data);
-  JsonEncoder encoder;
-  QByteArray dataMessage = encoder.writeJson(cmdMessage);
-  m_socket->write(dataMessage);
-}
-
-void ClientWorker::sendMessage() { startTimer(5000); }
-
-void ClientWorker::stopMessage() { killTimer(m_timerId); }
-
 void ClientWorker::disconnected()
 {
   LOG4CPLUS_DEBUG(m_logger, "Client disconnected descriptor: "
@@ -70,35 +48,50 @@ void ClientWorker::disconnected()
 
 void ClientWorker::readyRead()
 {
-  QByteArray data = m_socket->readAll();
-  JsonDecoder decoder;
-  QJsonObject jsonDoc;
-  if (decoder.parseToRawObject(data, jsonDoc))
+  m_buffer.append(m_socket->readAll());
+  char delimiter = '\n';
+  while (m_buffer.indexOf(delimiter) != -1)
   {
-    CMDType type = static_cast<CMDType>(jsonDoc["CMDType"].toInt());
-    switch (type)
-    {
-    case CMDType::START:
-    {
-      CommandStart cmdStart;
-      if (decoder.readJson(jsonDoc, cmdStart))
-      {
-        m_sizePacket = cmdStart.getCount();
-        cmdStart.toDebug(qDebug());
-        emit commandMessage();
-      }
-      break;
-    }
-    case CMDType::STOP:
-    {
-      Command cmdStop;
-      if (decoder.readJson(jsonDoc, cmdStop))
-      {
-        cmdStop.toDebug(qDebug());
-        emit commandStop();
-      }
-      break;
-    }
-    }
+    int index = m_buffer.indexOf(delimiter);
+    QByteArray data = m_buffer.left(index);
+    m_buffer.remove(0, index + 1);
+
+    Command* cmd = JsonDecoder::getCmd(data);
+
+    emit reciveCommand(cmd);
   }
+  //   JsonDecoder decoder;
+  //   QJsonObject jsonDoc; //ЗАТУПИЛА
+
+  //   if (decoder.parseToRawObject(data, jsonDoc))
+  //   {
+  //     CMDType type = static_cast<CMDType>(jsonDoc["CMDType"].toInt());
+  //     switch (cmd->getCMDType())
+  //     {
+  //     case CMDType::START:
+  //     {
+  //       CommandStart *cmdStart = dynamic_cast<CommandStart> (cmd);
+  //       cmdStart->getCount();
+
+  //       if (decoder.readJson(jsonDoc, cmdStart))
+  //       {
+  //         m_sizePacket = cmdStart.getCount();
+  //         cmdStart.toDebug(qDebug());
+  //         emit commandMessage();
+  //       }
+  //       break;
+  //     }
+  //     case CMDType::STOP:
+  //     {
+  //       Command cmdStop;
+  //       if (decoder.readJson(jsonDoc, cmdStop))
+  //       {
+  //         cmdStop.toDebug(qDebug());
+  //         emit commandStop();
+  //       }
+  //       break;
+  //     }
+  //     }
+  //   }
+  // }
 }

@@ -1,0 +1,37 @@
+#ifndef CMDHANDLER_H
+#define CMDHANDLER_H
+#include "Command.h"
+#include <QObject>
+#include <QThread>
+#include <climits>
+#include <cmath>
+#include <log4cplus/logger.h>
+#include <log4cplus/loggingmacros.h>
+
+using namespace log4cplus;
+
+class CMDHandler : public QObject
+{
+  Q_OBJECT
+
+public:
+  CMDHandler();
+  ~CMDHandler();
+
+protected:
+  void timerEvent(QTimerEvent* event) override;
+
+public slots:
+  void sendToCmd();
+
+signals:
+  void sendToCmd(Command* cmd);
+
+private:
+  Logger m_logger;
+  int m_sizePacket;
+  int m_timerId;
+  double m_currentX = static_cast<double>(INT_MIN);
+};
+
+#endif // CMDHANDLER_H

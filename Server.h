@@ -2,8 +2,6 @@
 #define SERVER_H
 #include "ClientWorker.h"
 #include "CommandStart.h"
-#include "JsonDecoder.h"
-#include "JsonEncoder.h"
 #include <QCoreApplication>
 #include <QDataStream>
 #include <QDebug>
@@ -16,7 +14,9 @@
 #include <QVector>
 #include <log4cplus/logger.h>
 #include <log4cplus/loggingmacros.h>
+
 using namespace log4cplus;
+
 class Server : public QTcpServer
 {
     Q_OBJECT
@@ -28,12 +28,11 @@ class Server : public QTcpServer
     explicit Server(QObject* parent);
     ~Server();
     void startServer(int port, QString protocol);
-  signals:
-    // void sendMessageToWorker(ClientWorker* target, const QByteArray& block);
-    void sendMessageToWorker(ClientWorker* target, const CommandStart& command);
+
   private slots:
     void error(const QString& errorMsg);
     void disconnected();
+    void stop();
 
   private:
     QVector<QString> messages;

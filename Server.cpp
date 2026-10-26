@@ -39,7 +39,6 @@ void Server::startServer(int port, QString protocol)
 
 void Server::incomingConnection(qintptr socketDescriptor)
 {
-  QString message = messages[QRandomGenerator::global()->bounded(messages.size())];
   LOG4CPLUS_DEBUG(m_logger, "Client connected successfully: " << socketDescriptor);
   QThread* thread = new QThread();
   ClientWorker* worker = new ClientWorker(socketDescriptor);
@@ -66,3 +65,5 @@ void Server::disconnected()
   m_workers.removeAll(worker);
   worker->deleteLater();
 }
+
+void Server::stop() { QCoreApplication::quit(); }
