@@ -1,12 +1,12 @@
 #include "ClientWorker.h"
 #include "JsonDecoder.h"
-#include "JsonEncoder.h"
 
 ClientWorker::ClientWorker(quint16 socketDescriptor)
   : socketDescriptor(socketDescriptor)
   , m_logger(Logger::getInstance("ClientWorker"))
 {
   m_socket = nullptr;
+  m_cmdHandler = nullptr;
   LOG4CPLUS_DEBUG(m_logger, "Memory allocated: " << this << " Current thread ID:"
                                                  << QThread::currentThreadId());
 }
@@ -18,22 +18,33 @@ ClientWorker::~ClientWorker()
   delete m_socket;
   m_socket = nullptr;
   if (!m_socket)
-    LOG4CPLUS_DEBUG(m_logger, "Memory freed: " << m_socket << " Current thread ID:"
-                                               << QThread::currentThreadId());
+    LOG4CPLUS_DEBUG(m_logger,
+                    "Memory freed m_socket: " << m_socket << " Current thread ID:"
+                                              << QThread::currentThreadId());
+  delete m_cmdHandler;
+  m_cmdHandler = nullptr;
+  if (!m_cmdHandler)
+    LOG4CPLUS_DEBUG(m_logger, "Memory freed m_cmdHandler: "
+                                  << m_cmdHandler << " Current thread ID:"
+                                  << QThread::currentThreadId());
 }
 
 void ClientWorker::process()
 {
   m_socket = new QTcpSocket();
-  if (m_socket && m_socket->setSocketDescriptor(socketDescriptor))
+  m_cmdHandler = new CMDHandler();
+  if (m_socket && m_socket->setSocketDescriptor(socketDescriptor) && m_cmdHandler)
   {
-    LOG4CPLUS_DEBUG(m_logger, "Memory allocated: " << m_socket
-                                                   << " Current thread ID:"
-                                                   << QThread::currentThreadId());
+    LOG4CPLUS_DEBUG(m_logger, "Memory allocated m_socket: "
+                                  << m_socket << " Current thread ID:"
+                                  << QThread::currentThreadId());
+    LOG4CPLUS_DEBUG(m_logger, "Memory allocated m_cmdHandler: "
+                                  << m_cmdHandler << " Current thread ID:"
+                                  << QThread::currentThreadId());
     connect(m_socket, &QTcpSocket::disconnected, this, &ClientWorker::disconnected);
     connect(m_socket, &QTcpSocket::readyRead, this, &ClientWorker::readyRead);
-    connect(this, &ClientWorker::commandMessage, this, &ClientWorker::sendMessage);
-    connect(this, &ClientWorker::commandStop, this, &ClientWorker::stopMessage);
+    connect(this, &ClientWorker::reciveCommand, m_cmdHandler, &CMDHandler::sortCmd);
+    connect(m_cmdHandler, &CMDHandler::sendCmd, this, &ClientWorker::sendMessage);
   }
   return;
 }
@@ -56,42 +67,13 @@ void ClientWorker::readyRead()
     QByteArray data = m_buffer.left(index);
     m_buffer.remove(0, index + 1);
 
-    Command* cmd = JsonDecoder::getCmd(data);
-
+    QJsonParseError parseError;
+    Command* cmd = JsonDecoder::getCmd(data, parseError);
+    if (parseError.error != QJsonParseError::NoError)
+      LOG4CPLUS_ERROR(m_logger, "Error: " << parseError.errorString().toStdString());
     emit reciveCommand(cmd);
+    QMetaObject::invokeMethod(qApp, [cmd]() { delete cmd; }, Qt::QueuedConnection);
   }
-  //   JsonDecoder decoder;
-  //   QJsonObject jsonDoc; //ЗАТУПИЛА
-
-  //   if (decoder.parseToRawObject(data, jsonDoc))
-  //   {
-  //     CMDType type = static_cast<CMDType>(jsonDoc["CMDType"].toInt());
-  //     switch (cmd->getCMDType())
-  //     {
-  //     case CMDType::START:
-  //     {
-  //       CommandStart *cmdStart = dynamic_cast<CommandStart> (cmd);
-  //       cmdStart->getCount();
-
-  //       if (decoder.readJson(jsonDoc, cmdStart))
-  //       {
-  //         m_sizePacket = cmdStart.getCount();
-  //         cmdStart.toDebug(qDebug());
-  //         emit commandMessage();
-  //       }
-  //       break;
-  //     }
-  //     case CMDType::STOP:
-  //     {
-  //       Command cmdStop;
-  //       if (decoder.readJson(jsonDoc, cmdStop))
-  //       {
-  //         cmdStop.toDebug(qDebug());
-  //         emit commandStop();
-  //       }
-  //       break;
-  //     }
-  //     }
-  //   }
-  // }
 }
+
+void ClientWorker::sendMessage(const QByteArray& data) { m_socket->write(data); }

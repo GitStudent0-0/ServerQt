@@ -1,5 +1,6 @@
 #ifndef CLIENTWORKER_H
 #define CLIENTWORKER_H
+#include "CMDHandler.h"
 #include "Command.h"
 #include <QDebug>
 #include <QJsonDocument>
@@ -10,6 +11,7 @@
 #include <QThread>
 #include <log4cplus/logger.h>
 #include <log4cplus/loggingmacros.h>
+
 using namespace log4cplus;
 
 class ClientWorker : public QObject
@@ -20,20 +22,15 @@ public:
   ClientWorker(quint16 socketDescriptor);
   ~ClientWorker();
 
-protected:
-  void timerEvent(QTimerEvent* event) override;
-
 public slots:
   void process();
-  void sendMessage();
+  void sendMessage(const QByteArray& data);
   void disconnected();
   void readyRead();
-  void stopMessage();
 
 signals:
   void finished();
   void error(QString err);
-  void commandMessage();
   void commandStop();
   void reciveCommand(Command* cmd);
 
@@ -42,6 +39,7 @@ private:
   quint16 socketDescriptor;
   Logger m_logger;
   QByteArray m_buffer;
+  CMDHandler* m_cmdHandler;
 };
 
 #endif // CLIENTWORKER_H

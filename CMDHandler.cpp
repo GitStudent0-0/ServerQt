@@ -2,7 +2,6 @@
 #include "Command.h"
 #include "CommandMessage.h"
 #include "CommandStart.h"
-#include "JsonDecoder.h"
 #include "JsonEncoder.h"
 
 CMDHandler::CMDHandler()
@@ -30,8 +29,32 @@ void CMDHandler::timerEvent(QTimerEvent* event)
     m_currentX += step;
   }
   CommandMessage cmdMessage(CMDType::MESSAGE, m_sizePacket, data);
-  JsonEncoder encoder;
-  QByteArray dataMessage = encoder.writeJson(cmdMessage);
+  QByteArray dataMessage = JsonEncoder::writeJson(cmdMessage);
   dataMessage.append('\n');
-  m_socket->write(dataMessage);
+  emit sendCmd(dataMessage);
+}
+
+void CMDHandler::sortCmd(Command* cmd)
+{
+  switch (cmd->getCMDType())
+  {
+  case CMDType::STOP:
+  {
+    cmd->toDebug(qDebug());
+    killTimer(m_timerId);
+    break;
+  }
+  case CMDType::START:
+  {
+    if (CommandStart* cmdStart = dynamic_cast<CommandStart*>(cmd))
+    {
+      m_sizePacket = cmdStart->getCount();
+      cmdStart->toDebug(qDebug());
+      startTimer(5000);
+    }
+    break;
+  }
+  default:
+    LOG4CPLUS_ERROR(m_logger, "Error: Unknown command");
+  }
 }

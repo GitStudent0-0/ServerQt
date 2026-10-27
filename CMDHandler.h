@@ -22,10 +22,10 @@ protected:
   void timerEvent(QTimerEvent* event) override;
 
 public slots:
-  void sendToCmd();
+  void sortCmd(Command* cmd);
 
 signals:
-  void sendToCmd(Command* cmd);
+  void sendCmd(const QByteArray& data);
 
 private:
   Logger m_logger;

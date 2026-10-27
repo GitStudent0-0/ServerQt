@@ -1,7 +1,6 @@
 #ifndef SERVER_H
 #define SERVER_H
 #include "ClientWorker.h"
-#include "CommandStart.h"
 #include <QCoreApplication>
 #include <QDataStream>
 #include <QDebug>
@@ -35,7 +34,6 @@ class Server : public QTcpServer
     void stop();
 
   private:
-    QVector<QString> messages;
     QVector<ClientWorker*> m_workers;
     Logger m_logger;
     QString m_protocol = "";
