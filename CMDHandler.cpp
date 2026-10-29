@@ -3,6 +3,7 @@
 #include "CommandMessage.h"
 #include "CommandStart.h"
 #include "JsonEncoder.h"
+#include "XmlEncoder.h"
 
 CMDHandler::CMDHandler()
   : m_logger(Logger::getInstance("CMDHandler"))
@@ -19,6 +20,19 @@ CMDHandler::~CMDHandler()
 
 void CMDHandler::timerEvent(QTimerEvent* event)
 {
+  // double start = static_cast<double>(INT_MIN);
+  // double end = static_cast<double>(INT_MAX);
+  // double step = (end - start) / (m_sizePacket - 1);
+  // QVector<double> data(m_sizePacket);
+  // for (int i = 0; i < m_sizePacket; i++)
+  // {
+  //   data[i] = sin(m_currentX);
+  //   m_currentX += step;
+  // }
+  // CommandMessage cmdMessage(CMDType::MESSAGE, m_sizePacket, data);
+  // QByteArray dataMessage = JsonEncoder::writeJson(cmdMessage);
+  // dataMessage.append('\n');
+  // emit sendCmd(dataMessage);
   double start = static_cast<double>(INT_MIN);
   double end = static_cast<double>(INT_MAX);
   double step = (end - start) / (m_sizePacket - 1);
@@ -29,7 +43,7 @@ void CMDHandler::timerEvent(QTimerEvent* event)
     m_currentX += step;
   }
   CommandMessage cmdMessage(CMDType::MESSAGE, m_sizePacket, data);
-  QByteArray dataMessage = JsonEncoder::writeJson(cmdMessage);
+  QByteArray dataMessage = XmlEncoder::writeXml(cmdMessage);
   dataMessage.append('\n');
   emit sendCmd(dataMessage);
 }

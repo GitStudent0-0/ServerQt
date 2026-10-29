@@ -1,5 +1,6 @@
 #include "ClientWorker.h"
 #include "JsonDecoder.h"
+#include "XmlDecoder.h"
 
 ClientWorker::ClientWorker(quint16 socketDescriptor)
   : socketDescriptor(socketDescriptor)
@@ -59,21 +60,27 @@ void ClientWorker::disconnected()
 
 void ClientWorker::readyRead()
 {
-  m_buffer.append(m_socket->readAll());
-  char delimiter = '\n';
-  while (m_buffer.indexOf(delimiter) != -1)
-  {
-    int index = m_buffer.indexOf(delimiter);
-    QByteArray data = m_buffer.left(index);
-    m_buffer.remove(0, index + 1);
+  // m_buffer.append(m_socket->readAll());
+  // char delimiter = '\n';
+  // while (m_buffer.indexOf(delimiter) != -1)
+  // {
+  //   int index = m_buffer.indexOf(delimiter);
+  //   QByteArray data = m_buffer.left(index);
+  //   m_buffer.remove(0, index + 1);
 
-    QJsonParseError parseError;
-    Command* cmd = JsonDecoder::getCmd(data, parseError);
-    if (parseError.error != QJsonParseError::NoError)
-      LOG4CPLUS_ERROR(m_logger, "Error: " << parseError.errorString().toStdString());
-    emit reciveCommand(cmd);
-    QMetaObject::invokeMethod(qApp, [cmd]() { delete cmd; }, Qt::QueuedConnection);
-  }
+  //   QJsonParseError parseError;
+  //   Command* cmd = JsonDecoder::getCmd(data, parseError);
+  //   if (parseError.error != QJsonParseError::NoError)
+  //     LOG4CPLUS_ERROR(m_logger, "Error: " <<
+  //     parseError.errorString().toStdString());
+  //   emit reciveCommand(cmd);
+  //   QMetaObject::invokeMethod(qApp, [cmd]() { delete cmd; },
+  //   Qt::QueuedConnection);
+  // }
+  QByteArray data = m_socket->readAll();
+  Command* cmd = XmlDecoder::getCmd(data);
+  emit reciveCommand(cmd);
+  QMetaObject::invokeMethod(qApp, [cmd]() { delete cmd; }, Qt::QueuedConnection);
 }
 
 void ClientWorker::sendMessage(const QByteArray& data) { m_socket->write(data); }

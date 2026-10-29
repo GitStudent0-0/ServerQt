@@ -2,6 +2,7 @@
 #define CLIENTWORKER_H
 #include "CMDHandler.h"
 #include "Command.h"
+#include <QCoreApplication>
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>

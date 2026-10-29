@@ -22,7 +22,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
   CMDHandler.h \
   ClientWorker.h \
-  Server.h \
+  Server.h
 
 INCLUDEPATH += $$PWD/../CommunicationProtocols
 LIBS += -L$$PWD/../CommunicationProtocols/lib -lCommunicationProtocols
