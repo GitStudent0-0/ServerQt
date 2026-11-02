@@ -2,6 +2,7 @@
 #define CLIENTWORKER_H
 #include "CMDHandler.h"
 #include "Command.h"
+#include "Protocol.h"
 #include <QCoreApplication>
 #include <QDebug>
 #include <QJsonDocument>
@@ -20,7 +21,7 @@ class ClientWorker : public QObject
   Q_OBJECT
 
 public:
-  ClientWorker(quint16 socketDescriptor);
+  ClientWorker(quint16 socketDescriptor, DataFormat protocol);
   ~ClientWorker();
 
 public slots:
@@ -36,6 +37,7 @@ signals:
   void reciveCommand(Command* cmd);
 
 private:
+  DataFormat m_protocol;
   QTcpSocket* m_socket;
   quint16 socketDescriptor;
   Logger m_logger;

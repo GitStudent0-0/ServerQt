@@ -1,6 +1,7 @@
 #ifndef CMDHANDLER_H
 #define CMDHANDLER_H
 #include "Command.h"
+#include "Protocol.h"
 #include <QObject>
 #include <QThread>
 #include <climits>
@@ -15,7 +16,7 @@ class CMDHandler : public QObject
   Q_OBJECT
 
 public:
-  CMDHandler();
+  CMDHandler(DataFormat protocol);
   ~CMDHandler();
 
 protected:
@@ -28,6 +29,7 @@ signals:
   void sendCmd(const QByteArray& data);
 
 private:
+  DataFormat m_protocol;
   Logger m_logger;
   int m_sizePacket;
   int m_timerId;

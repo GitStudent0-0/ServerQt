@@ -1,6 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 #include "ClientWorker.h"
+#include "Protocol.h"
 #include <QCoreApplication>
 #include <QDataStream>
 #include <QDebug>
@@ -36,6 +37,6 @@ class Server : public QTcpServer
   private:
     QVector<ClientWorker*> m_workers;
     Logger m_logger;
-    QString m_protocol = "";
+    DataFormat m_protocol;
 };
 #endif // SERVER_H

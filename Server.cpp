@@ -19,7 +19,11 @@ Server::~Server()
 
 void Server::startServer(int port, QString protocol)
 {
-  m_protocol = protocol;
+  if (protocol.toUpper() == "JSON")
+    m_protocol = DataFormat::JSON;
+  else if (protocol.toUpper() == "XML")
+    m_protocol = DataFormat::XML;
+
   if (!this->listen(QHostAddress::Any, port))
   {
     LOG4CPLUS_ERROR(m_logger, "Server: Unable to start the server: "
@@ -34,7 +38,7 @@ void Server::incomingConnection(qintptr socketDescriptor)
 {
   LOG4CPLUS_DEBUG(m_logger, "Client connected successfully: " << socketDescriptor);
   QThread* thread = new QThread();
-  ClientWorker* worker = new ClientWorker(socketDescriptor);
+  ClientWorker* worker = new ClientWorker(socketDescriptor, m_protocol);
   worker->moveToThread(thread);
   m_workers.push_back(worker);
   connect(worker, &ClientWorker::finished, this, &Server::disconnected);
