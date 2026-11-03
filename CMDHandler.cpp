@@ -29,8 +29,11 @@ void CMDHandler::timerEvent(QTimerEvent* event)
     m_currentX += step;
   }
   CommandMessage cmdMessage(CMDType::MESSAGE, m_sizePacket, data);
-  QByteArray dataMessage = Protocol::write(m_protocol, &cmdMessage);
+  Protocol* protocol = Protocol::create(m_protocol);
+  QByteArray dataMessage = protocol->write(&cmdMessage);
   dataMessage.append('\n');
+  QMetaObject::invokeMethod(
+      qApp, [protocol]() { delete protocol; }, Qt::QueuedConnection);
   emit sendCmd(dataMessage);
 }
 

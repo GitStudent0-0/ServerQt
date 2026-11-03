@@ -67,9 +67,12 @@ void ClientWorker::readyRead()
     QByteArray data = m_buffer.left(index);
     m_buffer.remove(0, index + 1);
     qDebug() << data;
-    Command* cmd = Protocol::read(m_protocol, data);
+    Protocol* protocol = Protocol::create(m_protocol);
+    Command* cmd = protocol->read(data);
     emit reciveCommand(cmd);
     QMetaObject::invokeMethod(qApp, [cmd]() { delete cmd; }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        qApp, [protocol]() { delete protocol; }, Qt::QueuedConnection);
   }
 }
 

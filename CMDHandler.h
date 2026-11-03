@@ -2,6 +2,7 @@
 #define CMDHANDLER_H
 #include "Command.h"
 #include "Protocol.h"
+#include <QCoreApplication>
 #include <QObject>
 #include <QThread>
 #include <climits>
