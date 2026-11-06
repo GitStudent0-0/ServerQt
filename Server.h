@@ -19,24 +19,24 @@ using namespace log4cplus;
 
 class Server : public QTcpServer
 {
-    Q_OBJECT
+  Q_OBJECT
 
-  protected:
-    void incomingConnection(qintptr socketDescriptor) override;
+protected:
+  void incomingConnection(qintptr socketDescriptor) override;
 
-  public:
-    explicit Server(QObject* parent);
-    ~Server();
-    void startServer(int port, QString protocol);
+public:
+  explicit Server(QObject* parent);
+  ~Server();
+  void startServer(int port, const DataFormat& protocol);
 
-  private slots:
-    void error(const QString& errorMsg);
-    void disconnected();
-    void stop();
+private slots:
+  void error(const QString& errorMsg);
+  void disconnected();
+  void stop();
 
-  private:
-    QVector<ClientWorker*> m_workers;
-    Logger m_logger;
-    DataFormat m_protocol;
+private:
+  QVector<ClientWorker*> m_workers;
+  Logger m_logger;
+  Protocol* m_protocol;
 };
 #endif // SERVER_H

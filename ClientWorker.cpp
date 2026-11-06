@@ -1,9 +1,9 @@
 #include "ClientWorker.h"
 
-ClientWorker::ClientWorker(quint16 socketDescriptor, DataFormat protocol)
-  : m_protocol(protocol)
-  , socketDescriptor(socketDescriptor)
-  , m_logger(Logger::getInstance("ClientWorker"))
+ClientWorker::ClientWorker(quint16 socketDescriptor, Protocol* protocol)
+  : socketDescriptor(socketDescriptor)
+  , m_logger(Logger::getInstance("Server.ClientWorker"))
+  , m_protocol(protocol)
 {
   m_socket = nullptr;
   m_cmdHandler = nullptr;
@@ -13,8 +13,6 @@ ClientWorker::ClientWorker(quint16 socketDescriptor, DataFormat protocol)
 
 ClientWorker::~ClientWorker()
 {
-  LOG4CPLUS_DEBUG(m_logger, "Memory freed: " << this << " Current thread ID:"
-                                             << QThread::currentThreadId());
   delete m_socket;
   m_socket = nullptr;
   if (!m_socket)
@@ -27,6 +25,8 @@ ClientWorker::~ClientWorker()
     LOG4CPLUS_DEBUG(m_logger, "Memory freed m_cmdHandler: "
                                   << m_cmdHandler << " Current thread ID:"
                                   << QThread::currentThreadId());
+  LOG4CPLUS_DEBUG(m_logger, "Memory freed: " << this << " Current thread ID:"
+                                             << QThread::currentThreadId());
 }
 
 void ClientWorker::process()
@@ -66,13 +66,8 @@ void ClientWorker::readyRead()
     int index = m_buffer.indexOf(delimiter);
     QByteArray data = m_buffer.left(index);
     m_buffer.remove(0, index + 1);
-    qDebug() << data;
-    Protocol* protocol = Protocol::create(m_protocol);
-    Command* cmd = protocol->read(data);
+    Command* cmd = m_protocol->read(data);
     emit reciveCommand(cmd);
-    QMetaObject::invokeMethod(qApp, [cmd]() { delete cmd; }, Qt::QueuedConnection);
-    QMetaObject::invokeMethod(
-        qApp, [protocol]() { delete protocol; }, Qt::QueuedConnection);
   }
 }
 

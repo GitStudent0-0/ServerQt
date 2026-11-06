@@ -17,7 +17,7 @@ class CMDHandler : public QObject
   Q_OBJECT
 
 public:
-  CMDHandler(DataFormat protocol);
+  CMDHandler(Protocol* protocol);
   ~CMDHandler();
 
 protected:
@@ -30,8 +30,8 @@ signals:
   void sendCmd(const QByteArray& data);
 
 private:
-  DataFormat m_protocol;
   Logger m_logger;
+  Protocol* m_protocol = nullptr;
   int m_sizePacket;
   int m_timerId;
   double m_currentX = static_cast<double>(INT_MIN);

@@ -21,19 +21,43 @@ void signalHandler(int sigInt)
       QMetaObject::invokeMethod(server, "stop");
 }
 
+LogLevel getLogLevel(QString log)
+{
+  log = log.toUpper();
+  if (log == "TRACE")
+    return TRACE_LOG_LEVEL;
+  else if (log == "DEBUG")
+    return DEBUG_LOG_LEVEL;
+  else if (log == "INFO")
+    return INFO_LOG_LEVEL;
+  else if (log == "WARN")
+    return WARN_LOG_LEVEL;
+  else if (log == "ERROR")
+    return ERROR_LOG_LEVEL;
+  else if (log == "FATAL")
+    return FATAL_LOG_LEVEL;
+  return DEBUG_LOG_LEVEL;
+}
+
 int main(int argc, char* argv[])
 {
   signal(SIGINT, signalHandler);
   signal(SIGTERM, signalHandler);
+
   Initializer initializer;
-  PropertyConfigurator::doConfigure("log4cplus.properties");
-  Logger m_logger = Logger::getInstance("main");
+  PropertyConfigurator::doConfigure(LOG4CPLUS_TEXT(LOG_CONFIG_PATH));
+  Logger m_logger = Logger::getInstance("Server.Main");
+
   QCoreApplication a(argc, argv);
   QCommandLineParser parser;
   QCommandLineOption portOption("p", "Port", "-p");
   QCommandLineOption protocolOption("protocol", "Protocol", "--protocol");
+  QCommandLineOption logOption(
+      "log", "Log level: TRACE < DEBUG < INFO < WARN < ERROR < FATAL", "--log");
+
   parser.addOption(portOption);
   parser.addOption(protocolOption);
+  parser.addOption(logOption);
   parser.addHelpOption();
   parser.addVersionOption();
   parser.process(a);
@@ -56,8 +80,22 @@ int main(int argc, char* argv[])
   }
   QString protocol = parser.value(protocolOption);
 
+  if (!parser.isSet(logOption))
+  {
+    LOG4CPLUS_ERROR(m_logger, "Error: Option " << logOption.valueName().toStdString()
+                                               << " was not specified");
+    parser.showHelp(1);
+  }
+  QString log = parser.value(logOption);
+  Logger::getRoot().setLogLevel(getLogLevel(log));
+
   server = new Server(qApp);
-  server->startServer(port, protocol);
+  if (protocol.toUpper() == "JSON")
+    server->startServer(port, DataFormat::JSON);
+  else if (protocol.toUpper() == "XML")
+    server->startServer(port, DataFormat::XML);
+  else
+    LOG4CPLUS_ERROR(m_logger, "Error: Protocol specified incorrectly");
 
   return a.exec();
 }

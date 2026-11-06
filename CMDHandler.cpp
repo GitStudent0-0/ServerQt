@@ -3,9 +3,9 @@
 #include "CommandMessage.h"
 #include "CommandStart.h"
 
-CMDHandler::CMDHandler(DataFormat protocol)
-  : m_protocol(protocol)
-  , m_logger(Logger::getInstance("CMDHandler"))
+CMDHandler::CMDHandler(Protocol* protocol)
+  : m_logger(Logger::getInstance("Server.CMDHandler"))
+  , m_protocol(protocol)
 {
   LOG4CPLUS_DEBUG(m_logger, "Memory allocated: " << this << " Current thread ID:"
                                                  << QThread::currentThreadId());
@@ -29,11 +29,8 @@ void CMDHandler::timerEvent(QTimerEvent* event)
     m_currentX += step;
   }
   CommandMessage cmdMessage(CMDType::MESSAGE, m_sizePacket, data);
-  Protocol* protocol = Protocol::create(m_protocol);
-  QByteArray dataMessage = protocol->write(&cmdMessage);
+  QByteArray dataMessage = m_protocol->write(&cmdMessage);
   dataMessage.append('\n');
-  QMetaObject::invokeMethod(
-      qApp, [protocol]() { delete protocol; }, Qt::QueuedConnection);
   emit sendCmd(dataMessage);
 }
 
@@ -60,4 +57,6 @@ void CMDHandler::sortCmd(Command* cmd)
   default:
     LOG4CPLUS_ERROR(m_logger, "Error: Unknown command");
   }
+  delete cmd;
+  cmd = nullptr;
 }

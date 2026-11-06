@@ -2,7 +2,7 @@
 
 Server::Server(QObject* parent)
   : QTcpServer(parent)
-  , m_logger(Logger::getInstance("Server"))
+  , m_logger(Logger::getInstance("Server.NetWork"))
 {
   LOG4CPLUS_DEBUG(m_logger, "Server created");
 }
@@ -10,19 +10,34 @@ Server::Server(QObject* parent)
 Server::~Server()
 {
   if (this->isListening())
-  {
     this->close();
-    this->deleteLater();
+
+  while (!m_workers.isEmpty())
+  {
+    ClientWorker* worker = m_workers.takeFirst();
+    if (worker)
+    {
+      disconnect(worker, &ClientWorker::finished, this, &Server::disconnected);
+      disconnect(worker, &ClientWorker::error, this, &Server::error);
+      QThread* thread = worker->thread();
+      if (thread && thread != QThread::currentThread())
+      {
+        thread->quit();
+        thread->wait();
+        delete worker;
+      }
+      else
+        worker->deleteLater();
+    }
   }
+  delete m_protocol;
+  m_protocol = nullptr;
   LOG4CPLUS_DEBUG(m_logger, "Server closed");
 }
 
-void Server::startServer(int port, QString protocol)
+void Server::startServer(int port, const DataFormat& protocol)
 {
-  if (protocol.toUpper() == "JSON")
-    m_protocol = DataFormat::JSON;
-  else if (protocol.toUpper() == "XML")
-    m_protocol = DataFormat::XML;
+  m_protocol = Protocol::create(protocol);
 
   if (!this->listen(QHostAddress::Any, port))
   {
@@ -57,10 +72,11 @@ void Server::error(const QString& errorMsg)
 void Server::disconnected()
 {
   ClientWorker* worker = qobject_cast<ClientWorker*>(sender());
-  if (!worker)
-    return;
-  m_workers.removeAll(worker);
-  worker->deleteLater();
+  if (worker)
+  {
+    m_workers.removeAll(worker);
+    worker->deleteLater();
+  }
 }
 
 void Server::stop() { QCoreApplication::quit(); }

@@ -21,7 +21,7 @@ class ClientWorker : public QObject
   Q_OBJECT
 
 public:
-  ClientWorker(quint16 socketDescriptor, DataFormat protocol);
+  ClientWorker(quint16 socketDescriptor, Protocol* protocol);
   ~ClientWorker();
 
 public slots:
@@ -37,10 +37,10 @@ signals:
   void reciveCommand(Command* cmd);
 
 private:
-  DataFormat m_protocol;
   QTcpSocket* m_socket;
   quint16 socketDescriptor;
   Logger m_logger;
+  Protocol* m_protocol = nullptr;
   QByteArray m_buffer;
   CMDHandler* m_cmdHandler;
 };
