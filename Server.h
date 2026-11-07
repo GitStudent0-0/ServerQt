@@ -25,9 +25,8 @@ protected:
   void incomingConnection(qintptr socketDescriptor) override;
 
 public:
-  explicit Server(QObject* parent);
+  explicit Server(QObject* parent, int port, const DataFormat& protocol);
   ~Server();
-  void startServer(int port, const DataFormat& protocol);
 
 private slots:
   void error(const QString& errorMsg);

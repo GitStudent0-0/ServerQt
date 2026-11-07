@@ -5,21 +5,19 @@ ClientWorker::ClientWorker(quint16 socketDescriptor, Protocol* protocol)
   , m_logger(Logger::getInstance("Server.ClientWorker"))
   , m_protocol(protocol)
 {
-  m_socket = nullptr;
-  m_cmdHandler = nullptr;
   LOG4CPLUS_DEBUG(m_logger, "Memory allocated: " << this << " Current thread ID:"
                                                  << QThread::currentThreadId());
 }
 
 ClientWorker::~ClientWorker()
 {
-  delete m_socket;
+  m_socket->deleteLater();
   m_socket = nullptr;
   if (!m_socket)
     LOG4CPLUS_DEBUG(m_logger,
                     "Memory freed m_socket: " << m_socket << " Current thread ID:"
                                               << QThread::currentThreadId());
-  delete m_cmdHandler;
+  m_cmdHandler->deleteLater();
   m_cmdHandler = nullptr;
   if (!m_cmdHandler)
     LOG4CPLUS_DEBUG(m_logger, "Memory freed m_cmdHandler: "
@@ -67,7 +65,10 @@ void ClientWorker::readyRead()
     QByteArray data = m_buffer.left(index);
     m_buffer.remove(0, index + 1);
     Command* cmd = m_protocol->read(data);
-    emit reciveCommand(cmd);
+    if (!cmd)
+      LOG4CPLUS_ERROR(m_logger, "Error: Сommand not in the specified format");
+    else
+      emit reciveCommand(cmd);
   }
 }
 

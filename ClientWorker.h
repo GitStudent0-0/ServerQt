@@ -37,12 +37,12 @@ signals:
   void reciveCommand(Command* cmd);
 
 private:
-  QTcpSocket* m_socket;
+  QTcpSocket* m_socket = nullptr;
   quint16 socketDescriptor;
   Logger m_logger;
   Protocol* m_protocol = nullptr;
   QByteArray m_buffer;
-  CMDHandler* m_cmdHandler;
+  CMDHandler* m_cmdHandler = nullptr;
 };
 
 #endif // CLIENTWORKER_H

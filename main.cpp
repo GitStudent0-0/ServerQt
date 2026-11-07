@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 
   if (!parser.isSet(portOption))
   {
-    LOG4CPLUS_ERROR(m_logger, "Error: Option "
+    LOG4CPLUS_FATAL(m_logger, "Error: Option "
                                   << portOption.valueName().toStdString()
                                   << " was not specified");
     parser.showHelp(1);
@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
 
   if (!parser.isSet(protocolOption))
   {
-    LOG4CPLUS_ERROR(m_logger, "Error: Option "
+    LOG4CPLUS_FATAL(m_logger, "Error: Option "
                                   << protocolOption.valueName().toStdString()
                                   << " was not specified");
     parser.showHelp(1);
@@ -82,20 +82,19 @@ int main(int argc, char* argv[])
 
   if (!parser.isSet(logOption))
   {
-    LOG4CPLUS_ERROR(m_logger, "Error: Option " << logOption.valueName().toStdString()
+    LOG4CPLUS_FATAL(m_logger, "Error: Option " << logOption.valueName().toStdString()
                                                << " was not specified");
     parser.showHelp(1);
   }
   QString log = parser.value(logOption);
   Logger::getRoot().setLogLevel(getLogLevel(log));
 
-  server = new Server(qApp);
   if (protocol.toUpper() == "JSON")
-    server->startServer(port, DataFormat::JSON);
+    server = new Server(qApp, port, DataFormat::JSON);
   else if (protocol.toUpper() == "XML")
-    server->startServer(port, DataFormat::XML);
+    server = new Server(qApp, port, DataFormat::XML);
   else
-    LOG4CPLUS_ERROR(m_logger, "Error: Protocol specified incorrectly");
+    LOG4CPLUS_FATAL(m_logger, "Error: Protocol specified incorrectly");
 
   return a.exec();
 }

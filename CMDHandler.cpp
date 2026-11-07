@@ -42,6 +42,7 @@ void CMDHandler::sortCmd(Command* cmd)
   {
     cmd->toDebug(qDebug());
     killTimer(m_timerId);
+    m_timerId = 0;
     break;
   }
   case CMDType::START:

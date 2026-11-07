@@ -1,57 +1,27 @@
 #include "Server.h"
 
-Server::Server(QObject* parent)
+Server::Server(QObject* parent, int port, const DataFormat& protocol)
   : QTcpServer(parent)
   , m_logger(Logger::getInstance("Server.NetWork"))
 {
-  LOG4CPLUS_DEBUG(m_logger, "Server created");
-}
-
-Server::~Server()
-{
-  if (this->isListening())
-    this->close();
-
-  while (!m_workers.isEmpty())
-  {
-    ClientWorker* worker = m_workers.takeFirst();
-    if (worker)
-    {
-      disconnect(worker, &ClientWorker::finished, this, &Server::disconnected);
-      disconnect(worker, &ClientWorker::error, this, &Server::error);
-      QThread* thread = worker->thread();
-      if (thread && thread != QThread::currentThread())
-      {
-        thread->quit();
-        thread->wait();
-        delete worker;
-      }
-      else
-        worker->deleteLater();
-    }
-  }
-  delete m_protocol;
-  m_protocol = nullptr;
-  LOG4CPLUS_DEBUG(m_logger, "Server closed");
-}
-
-void Server::startServer(int port, const DataFormat& protocol)
-{
+  LOG4CPLUS_INFO(m_logger, "Server created");
   m_protocol = Protocol::create(protocol);
 
-  if (!this->listen(QHostAddress::Any, port))
+  if (!listen(QHostAddress::Any, port))
   {
     LOG4CPLUS_ERROR(m_logger, "Server: Unable to start the server: "
-                                  << this->errorString().toStdString());
-    this->close();
+                                  << errorString().toStdString());
+    close();
     return;
   }
-  LOG4CPLUS_DEBUG(m_logger, "The server is listening on port: " << port);
+  LOG4CPLUS_INFO(m_logger, "The server is listening on port: " << port);
 }
+
+Server::~Server() { LOG4CPLUS_INFO(m_logger, "Server closed"); }
 
 void Server::incomingConnection(qintptr socketDescriptor)
 {
-  LOG4CPLUS_DEBUG(m_logger, "Client connected successfully: " << socketDescriptor);
+  LOG4CPLUS_INFO(m_logger, "Client connected successfully: " << socketDescriptor);
   QThread* thread = new QThread();
   ClientWorker* worker = new ClientWorker(socketDescriptor, m_protocol);
   worker->moveToThread(thread);
@@ -79,4 +49,31 @@ void Server::disconnected()
   }
 }
 
-void Server::stop() { QCoreApplication::quit(); }
+void Server::stop()
+{
+  if (isListening())
+    close();
+
+  while (!m_workers.isEmpty())
+  {
+    ClientWorker* worker = m_workers.takeFirst();
+    if (worker)
+    {
+      disconnect(worker, &ClientWorker::finished, this, &Server::disconnected);
+      disconnect(worker, &ClientWorker::error, this, &Server::error);
+      QThread* thread = worker->thread();
+      if (thread && thread != QThread::currentThread())
+      {
+        worker->deleteLater();
+        thread->quit();
+        thread->wait();
+      }
+      else
+        worker->deleteLater();
+    }
+  }
+  delete m_protocol;
+  m_protocol = nullptr;
+  LOG4CPLUS_INFO(m_logger, "Server stopped successfully");
+  QCoreApplication::quit();
+}
