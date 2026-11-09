@@ -7,10 +7,13 @@
 #include <QString>
 #include <QTcpServer>
 #include <log4cplus/configurator.h>
+#include <log4cplus/helpers/loglog.h>
 #include <log4cplus/initializer.h>
 #include <signal.h>
 
 using namespace log4cplus;
+using std::string;
+using std::to_string;
 
 static Server* server = nullptr;
 
@@ -45,7 +48,7 @@ int main(int argc, char* argv[])
   signal(SIGTERM, signalHandler);
 
   Initializer initializer;
-  PropertyConfigurator::doConfigure(LOG4CPLUS_TEXT(LOG_CONFIG_PATH));
+  helpers::Properties props(LOG4CPLUS_TEXT(LOG_CONFIG_PATH));
   Logger m_logger = Logger::getInstance("Server.Main");
 
   QCoreApplication a(argc, argv);
@@ -88,6 +91,12 @@ int main(int argc, char* argv[])
   }
   QString log = parser.value(logOption);
   Logger::getRoot().setLogLevel(getLogLevel(log));
+
+  string uniqueName = "logs/app-Server.log";
+  props.setProperty(LOG4CPLUS_TEXT("log4cplus.appender.FileAppender.File"),
+                    LOG4CPLUS_TEXT(uniqueName));
+  PropertyConfigurator config(props);
+  config.configure();
 
   if (protocol.toUpper() == "JSON")
     server = new Server(qApp, port, DataFormat::JSON);

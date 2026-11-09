@@ -1,4 +1,6 @@
 #include "ClientWorker.h"
+#include <netinet/tcp.h>
+#include <sys/socket.h>
 
 ClientWorker::ClientWorker(quint16 socketDescriptor, Protocol* protocol)
   : socketDescriptor(socketDescriptor)
@@ -29,6 +31,10 @@ ClientWorker::~ClientWorker()
 
 void ClientWorker::process()
 {
+  int keepOpt = 1;
+  int keepIdle = 5;
+  int keepInterval = 5;
+  int keepCount = 2;
   m_socket = new QTcpSocket();
   m_cmdHandler = new CMDHandler(m_protocol);
   if (m_socket && m_socket->setSocketDescriptor(socketDescriptor) && m_cmdHandler)
@@ -39,7 +45,17 @@ void ClientWorker::process()
     LOG4CPLUS_DEBUG(m_logger, "Memory allocated m_cmdHandler: "
                                   << m_cmdHandler << " Current thread ID:"
                                   << QThread::currentThreadId());
+
+    m_socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+    int sd = static_cast<int>(m_socket->socketDescriptor());
+    setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, &keepOpt, sizeof(keepOpt));
+    setsockopt(sd, SOL_TCP, TCP_KEEPIDLE, &keepIdle, sizeof(keepIdle));
+    setsockopt(sd, SOL_TCP, TCP_KEEPINTVL, &keepInterval, sizeof(keepInterval));
+    setsockopt(sd, SOL_TCP, TCP_KEEPCNT, &keepCount, sizeof(keepCount));
+
     connect(m_socket, &QTcpSocket::disconnected, this, &ClientWorker::disconnected);
+    connect(m_socket, &QTcpSocket::errorOccurred, this,
+            &ClientWorker::errorOccurred);
     connect(m_socket, &QTcpSocket::readyRead, this, &ClientWorker::readyRead);
     connect(this, &ClientWorker::reciveCommand, m_cmdHandler, &CMDHandler::sortCmd);
     connect(m_cmdHandler, &CMDHandler::sendCmd, this, &ClientWorker::sendMessage);
@@ -73,3 +89,16 @@ void ClientWorker::readyRead()
 }
 
 void ClientWorker::sendMessage(const QByteArray& data) { m_socket->write(data); }
+
+void ClientWorker::errorOccurred(QAbstractSocket::SocketError socketError)
+{
+  qDebug() << 15;
+  if (socketError == QAbstractSocket::NetworkError ||
+      socketError == QAbstractSocket::RemoteHostClosedError ||
+      socketError == QAbstractSocket::SocketTimeoutError ||
+      socketError == QAbstractSocket::UnknownSocketError)
+  {
+    LOG4CPLUS_ERROR(m_logger, "The client disconnected with an error");
+    m_socket->abort();
+  }
+}

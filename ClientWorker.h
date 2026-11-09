@@ -29,6 +29,7 @@ public slots:
   void sendMessage(const QByteArray& data);
   void disconnected();
   void readyRead();
+  void errorOccurred(QAbstractSocket::SocketError socketError);
 
 signals:
   void finished();
