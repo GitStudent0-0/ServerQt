@@ -33,7 +33,7 @@ private:
   Logger m_logger;
   Protocol* m_protocol = nullptr;
   int m_sizePacket;
-  int m_timerId;
+  int m_timerId = 0;
   double m_currentX = static_cast<double>(INT_MIN);
 };
 

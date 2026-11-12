@@ -3,7 +3,7 @@
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 
-ClientWorker::ClientWorker(quint16 socketDescriptor, Protocol* protocol)
+ClientWorker::ClientWorker(qintptr socketDescriptor, Protocol* protocol)
   : socketDescriptor(socketDescriptor)
   , m_logger(Logger::getInstance("Server.ClientWorker"))
   , m_protocol(protocol)
@@ -70,6 +70,11 @@ void ClientWorker::process()
     setsockopt(m_socket->socketDescriptor(), IPPROTO_TCP, TCP_USER_TIMEOUT,
                &userTimeout, sizeof(userTimeout));
   }
+  else
+  {
+    LOG4CPLUS_ERROR(m_logger, "Error: Ivalid descriptor: " << socketDescriptor);
+    emit finished();
+  }
   return;
 }
 
@@ -103,7 +108,10 @@ void ClientWorker::sendMessage(const QByteArray& data) { m_socket->write(data); 
 void ClientWorker::errorOccurred(QAbstractSocket::SocketError socketError)
 {
   if (socketError == QAbstractSocket::RemoteHostClosedError)
+  {
     LOG4CPLUS_ERROR(m_logger, "Client disconnected correctly: " << socketError);
+    return;
+  }
   if (socketError == QAbstractSocket::NetworkError ||
       socketError == QAbstractSocket::RemoteHostClosedError ||
       socketError == QAbstractSocket::SocketTimeoutError ||

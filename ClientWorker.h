@@ -21,7 +21,7 @@ class ClientWorker : public QObject
   Q_OBJECT
 
 public:
-  ClientWorker(quint16 socketDescriptor, Protocol* protocol);
+  ClientWorker(qintptr socketDescriptor, Protocol* protocol);
   ~ClientWorker();
 
 public slots:
@@ -39,7 +39,7 @@ signals:
 
 private:
   QTcpSocket* m_socket = nullptr;
-  quint16 socketDescriptor;
+  qintptr socketDescriptor;
   Logger m_logger;
   Protocol* m_protocol = nullptr;
   QByteArray m_buffer;

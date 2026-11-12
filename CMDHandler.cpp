@@ -42,8 +42,11 @@ void CMDHandler::sortCmd(Command* cmd)
   case CMDType::STOP:
   {
     cmd->toDebug(qDebug());
-    killTimer(m_timerId);
-    m_timerId = 0;
+    if (m_timerId != 0)
+    {
+      killTimer(m_timerId);
+      m_timerId = 0;
+    }
     break;
   }
   case CMDType::START:
@@ -51,8 +54,19 @@ void CMDHandler::sortCmd(Command* cmd)
     if (CommandStart* cmdStart = dynamic_cast<CommandStart*>(cmd))
     {
       m_sizePacket = cmdStart->getCount();
-      cmdStart->toDebug(qDebug());
-      m_timerId = startTimer(5000);
+      if (m_sizePacket > 30)
+        LOG4CPLUS_ERROR(m_logger, "Error: Count size exceeded");
+      else
+      {
+        cmdStart->toDebug(qDebug());
+        if (m_timerId != 0)
+        {
+          killTimer(m_timerId);
+          m_timerId = startTimer(5000);
+        }
+        else
+          m_timerId = startTimer(5000);
+      }
     }
     break;
   }
