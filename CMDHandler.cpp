@@ -13,6 +13,7 @@ CMDHandler::CMDHandler(Protocol* protocol)
 
 CMDHandler::~CMDHandler()
 {
+  m_protocol = nullptr;
   LOG4CPLUS_DEBUG(m_logger, "Memory freed: " << this << " Current thread ID:"
                                              << QThread::currentThreadId());
 }
@@ -51,7 +52,7 @@ void CMDHandler::sortCmd(Command* cmd)
     {
       m_sizePacket = cmdStart->getCount();
       cmdStart->toDebug(qDebug());
-      startTimer(5000);
+      m_timerId = startTimer(5000);
     }
     break;
   }

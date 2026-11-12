@@ -11,6 +11,8 @@ Server::Server(QObject* parent, int port, const DataFormat& protocol)
   {
     LOG4CPLUS_ERROR(m_logger, "Server: Unable to start the server: "
                                   << errorString().toStdString());
+    delete m_protocol;
+    m_protocol = nullptr;
     close();
     return;
   }

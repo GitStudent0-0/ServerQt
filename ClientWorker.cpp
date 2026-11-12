@@ -1,4 +1,5 @@
 #include "ClientWorker.h"
+#include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 
@@ -13,28 +14,34 @@ ClientWorker::ClientWorker(quint16 socketDescriptor, Protocol* protocol)
 
 ClientWorker::~ClientWorker()
 {
-  m_socket->deleteLater();
-  m_socket = nullptr;
-  if (!m_socket)
+  if (m_socket)
+  {
     LOG4CPLUS_DEBUG(m_logger,
                     "Memory freed m_socket: " << m_socket << " Current thread ID:"
                                               << QThread::currentThreadId());
-  m_cmdHandler->deleteLater();
-  m_cmdHandler = nullptr;
-  if (!m_cmdHandler)
+    m_socket->deleteLater();
+    m_socket = nullptr;
+  }
+
+  if (m_cmdHandler)
+  {
     LOG4CPLUS_DEBUG(m_logger, "Memory freed m_cmdHandler: "
                                   << m_cmdHandler << " Current thread ID:"
                                   << QThread::currentThreadId());
+    m_cmdHandler->deleteLater();
+    m_cmdHandler = nullptr;
+  }
+  m_protocol = nullptr;
   LOG4CPLUS_DEBUG(m_logger, "Memory freed: " << this << " Current thread ID:"
                                              << QThread::currentThreadId());
 }
 
 void ClientWorker::process()
 {
-  int keepOpt = 1;
-  int keepIdle = 5;
-  int keepInterval = 5;
+  int keepIdle = 3;
+  int keepInterval = 3;
   int keepCount = 2;
+  int userTimeout = 1;
   m_socket = new QTcpSocket();
   m_cmdHandler = new CMDHandler(m_protocol);
   if (m_socket && m_socket->setSocketDescriptor(socketDescriptor) && m_cmdHandler)
@@ -46,19 +53,22 @@ void ClientWorker::process()
                                   << m_cmdHandler << " Current thread ID:"
                                   << QThread::currentThreadId());
 
-    m_socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
-    int sd = static_cast<int>(m_socket->socketDescriptor());
-    setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, &keepOpt, sizeof(keepOpt));
-    setsockopt(sd, SOL_TCP, TCP_KEEPIDLE, &keepIdle, sizeof(keepIdle));
-    setsockopt(sd, SOL_TCP, TCP_KEEPINTVL, &keepInterval, sizeof(keepInterval));
-    setsockopt(sd, SOL_TCP, TCP_KEEPCNT, &keepCount, sizeof(keepCount));
-
     connect(m_socket, &QTcpSocket::disconnected, this, &ClientWorker::disconnected);
     connect(m_socket, &QTcpSocket::errorOccurred, this,
             &ClientWorker::errorOccurred);
     connect(m_socket, &QTcpSocket::readyRead, this, &ClientWorker::readyRead);
     connect(this, &ClientWorker::reciveCommand, m_cmdHandler, &CMDHandler::sortCmd);
     connect(m_cmdHandler, &CMDHandler::sendCmd, this, &ClientWorker::sendMessage);
+
+    m_socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+    setsockopt(m_socket->socketDescriptor(), IPPROTO_TCP, TCP_KEEPIDLE, &keepIdle,
+               sizeof(keepIdle));
+    setsockopt(m_socket->socketDescriptor(), IPPROTO_TCP, TCP_KEEPINTVL,
+               &keepInterval, sizeof(keepInterval));
+    setsockopt(m_socket->socketDescriptor(), IPPROTO_TCP, TCP_KEEPCNT, &keepCount,
+               sizeof(keepCount));
+    setsockopt(m_socket->socketDescriptor(), IPPROTO_TCP, TCP_USER_TIMEOUT,
+               &userTimeout, sizeof(userTimeout));
   }
   return;
 }
@@ -92,13 +102,14 @@ void ClientWorker::sendMessage(const QByteArray& data) { m_socket->write(data); 
 
 void ClientWorker::errorOccurred(QAbstractSocket::SocketError socketError)
 {
-  qDebug() << 15;
+  if (socketError == QAbstractSocket::RemoteHostClosedError)
+    LOG4CPLUS_ERROR(m_logger, "Client disconnected correctly: " << socketError);
   if (socketError == QAbstractSocket::NetworkError ||
       socketError == QAbstractSocket::RemoteHostClosedError ||
       socketError == QAbstractSocket::SocketTimeoutError ||
       socketError == QAbstractSocket::UnknownSocketError)
   {
-    LOG4CPLUS_ERROR(m_logger, "The client disconnected with an error");
+    LOG4CPLUS_ERROR(m_logger, "Socket error: " << socketError);
     m_socket->abort();
   }
 }

@@ -90,13 +90,13 @@ int main(int argc, char* argv[])
     parser.showHelp(1);
   }
   QString log = parser.value(logOption);
-  Logger::getRoot().setLogLevel(getLogLevel(log));
 
   string uniqueName = "logs/app-Server.log";
   props.setProperty(LOG4CPLUS_TEXT("log4cplus.appender.FileAppender.File"),
                     LOG4CPLUS_TEXT(uniqueName));
   PropertyConfigurator config(props);
   config.configure();
+  Logger::getRoot().setLogLevel(getLogLevel(log));
 
   if (protocol.toUpper() == "JSON")
     server = new Server(qApp, port, DataFormat::JSON);
