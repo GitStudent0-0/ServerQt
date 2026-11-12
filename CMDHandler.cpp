@@ -20,6 +20,11 @@ CMDHandler::~CMDHandler()
 
 void CMDHandler::timerEvent(QTimerEvent* event)
 {
+  if (m_timerId != 0)
+  {
+    killTimer(m_timerId);
+    m_timerId = 0;
+  }
   double start = static_cast<double>(INT_MIN);
   double end = static_cast<double>(INT_MAX);
   double step = (end - start) / (m_sizePacket - 1);
@@ -33,6 +38,7 @@ void CMDHandler::timerEvent(QTimerEvent* event)
   QByteArray dataMessage = m_protocol->write(&cmdMessage);
   dataMessage.append('\n');
   emit sendCmd(dataMessage);
+  m_timerId = startTimer(5000);
 }
 
 void CMDHandler::sortCmd(Command* cmd)
@@ -57,16 +63,7 @@ void CMDHandler::sortCmd(Command* cmd)
       if (m_sizePacket > 30)
         LOG4CPLUS_ERROR(m_logger, "Error: Count size exceeded");
       else
-      {
-        cmdStart->toDebug(qDebug());
-        if (m_timerId != 0)
-        {
-          killTimer(m_timerId);
-          m_timerId = startTimer(5000);
-        }
-        else
-          m_timerId = startTimer(5000);
-      }
+        m_timerId = startTimer(5000);
     }
     break;
   }

@@ -38,10 +38,10 @@ ClientWorker::~ClientWorker()
 
 void ClientWorker::process()
 {
-  int keepIdle = 3;
-  int keepInterval = 3;
-  int keepCount = 2;
-  int userTimeout = 1;
+  int keepIdle = 5;
+  int keepInterval = 5;
+  int keepCount = 3;
+  int userTimeout = 10000;
   m_socket = new QTcpSocket();
   m_cmdHandler = new CMDHandler(m_protocol);
   if (m_socket && m_socket->setSocketDescriptor(socketDescriptor) && m_cmdHandler)
@@ -109,7 +109,7 @@ void ClientWorker::errorOccurred(QAbstractSocket::SocketError socketError)
 {
   if (socketError == QAbstractSocket::RemoteHostClosedError)
   {
-    LOG4CPLUS_ERROR(m_logger, "Client disconnected correctly: " << socketError);
+    LOG4CPLUS_INFO(m_logger, "Client disconnected correctly: " << socketError);
     return;
   }
   if (socketError == QAbstractSocket::NetworkError ||
