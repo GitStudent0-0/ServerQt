@@ -33,6 +33,12 @@ private slots:
   void disconnected();
   void stop();
 
+public slots:
+  void getStats();
+
+signals:
+  void sendStats(int count, int bytes);
+
 private:
   QVector<ClientWorker*> m_workers;
   Logger m_logger;

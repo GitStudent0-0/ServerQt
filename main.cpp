@@ -1,3 +1,4 @@
+#include "HttpServer.h"
 #include "Server.h"
 #include <QCommandLineOption>
 #include <QCommandLineParser>
@@ -16,6 +17,7 @@ using std::string;
 using std::to_string;
 
 static Server* server = nullptr;
+static HttpServer* httpServer = nullptr;
 
 void signalHandler(int sigInt)
 {
@@ -104,6 +106,10 @@ int main(int argc, char* argv[])
     server = new Server(qApp, port, DataFormat::XML);
   else
     LOG4CPLUS_FATAL(m_logger, "Error: Protocol specified incorrectly");
+
+  httpServer = new HttpServer(qApp, 80);
+  QObject::connect(httpServer, &HttpServer::getStats, server, &Server::getStats);
+  QObject::connect(server, &Server::sendStats, httpServer, &HttpServer::sendStats);
 
   return a.exec();
 }

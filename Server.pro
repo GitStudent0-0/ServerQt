@@ -11,6 +11,7 @@ PKGCONFIG += log4cplus
 SOURCES += \
         CMDHandler.cpp \
         ClientWorker.cpp \
+        HttpServer.cpp \
         Server.cpp \
         main.cpp
 
@@ -22,6 +23,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
   CMDHandler.h \
   ClientWorker.h \
+  HttpServer.h \
   Server.h
 
 INCLUDEPATH += $$PWD/../CommunicationProtocols
