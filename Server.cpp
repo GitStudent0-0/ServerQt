@@ -28,6 +28,7 @@ void Server::incomingConnection(qintptr socketDescriptor)
   ClientWorker* worker = new ClientWorker(socketDescriptor, m_protocol);
   worker->moveToThread(thread);
   m_workers.push_back(worker);
+  connect(worker, &ClientWorker::sendTotalBytes, this, &Server::sumTotalBytes);
   connect(worker, &ClientWorker::finished, this, &Server::disconnected);
   connect(worker, &ClientWorker::error, this, &Server::error);
   connect(thread, &QThread::started, worker, &ClientWorker::process);
@@ -51,6 +52,13 @@ void Server::disconnected()
   }
 }
 
+void Server::sumTotalBytes(size_t size) { m_totalBytesSentClients += size; }
+
+void Server::getStats()
+{
+  int countClients = m_workers.size();
+  emit sendStats(countClients, m_totalBytesSentClients);
+}
 void Server::stop()
 {
   if (isListening())

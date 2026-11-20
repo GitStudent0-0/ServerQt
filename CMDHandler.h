@@ -27,12 +27,12 @@ public slots:
   void sortCmd(Command* cmd);
 
 signals:
-  void sendCmd(const QByteArray& data);
+  void sendCmd(const QByteArray& data, size_t size);
 
 private:
   Logger m_logger;
   Protocol* m_protocol = nullptr;
-  int m_sizePacket;
+  int m_sizePacket = 0;
   int m_timerId = 0;
   double m_currentX = static_cast<double>(INT_MIN);
 };

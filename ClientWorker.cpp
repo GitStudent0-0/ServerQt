@@ -103,7 +103,11 @@ void ClientWorker::readyRead()
   }
 }
 
-void ClientWorker::sendMessage(const QByteArray& data) { m_socket->write(data); }
+void ClientWorker::sendMessage(const QByteArray& data, size_t size)
+{
+  if (m_socket->write(data) > 0)
+    emit sendTotalBytes(size);
+}
 
 void ClientWorker::errorOccurred(QAbstractSocket::SocketError socketError)
 {

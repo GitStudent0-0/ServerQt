@@ -37,7 +37,7 @@ void CMDHandler::timerEvent(QTimerEvent* event)
   CommandMessage cmdMessage(CMDType::MESSAGE, m_sizePacket, data);
   QByteArray dataMessage = m_protocol->write(&cmdMessage);
   dataMessage.append('\n');
-  emit sendCmd(dataMessage);
+  emit sendCmd(dataMessage, sizeof(m_sizePacket));
   m_timerId = startTimer(5000);
 }
 

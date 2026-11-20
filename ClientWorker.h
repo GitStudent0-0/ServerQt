@@ -26,7 +26,7 @@ public:
 
 public slots:
   void process();
-  void sendMessage(const QByteArray& data);
+  void sendMessage(const QByteArray& data, size_t size);
   void disconnected();
   void readyRead();
   void errorOccurred(QAbstractSocket::SocketError socketError);
@@ -36,6 +36,7 @@ signals:
   void error(QString err);
   void commandStop();
   void reciveCommand(Command* cmd);
+  void sendTotalBytes(size_t size);
 
 private:
   QTcpSocket* m_socket = nullptr;

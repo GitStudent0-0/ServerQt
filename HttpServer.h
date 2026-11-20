@@ -1,7 +1,10 @@
 #ifndef HTTPSERVER_H
 #define HTTPSERVER_H
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QUrl>
 #include <log4cplus/logger.h>
 #include <log4cplus/loggingmacros.h>
 
@@ -9,30 +12,30 @@ using namespace log4cplus;
 
 class HttpServer : public QTcpServer
 {
+  Q_OBJECT
 
 public:
   HttpServer(QObject* parent, int port);
   ~HttpServer();
 
-protected:
-  void incomingConnection(qintptr socketDescriptor) override;
-
 private slots:
   void connection();
   void readyRead();
-  void error(const QString& errorMsg);
+  void error(QAbstractSocket::SocketError socketError);
   void disconnected();
-  void finished();
   void sendAnswer();
 
 public slots:
-  void sendStats(int count, int bytes);
+  void sendStats(int count, size_t bytes);
 
 signals:
   void getStats();
+  void finished();
 
 private:
   Logger m_logger;
   QHash<QTcpSocket*, QByteArray> m_buffers;
+  int m_countClients = 0;
+  size_t m_bytesSent = 0;
 };
 #endif // HTTPSERVER_H

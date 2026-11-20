@@ -16,7 +16,17 @@ HttpServer::HttpServer(QObject* parent, int port)
   connect(this, &QTcpServer::newConnection, this, &HttpServer::connection);
 }
 
-HttpServer::~HttpServer() { LOG4CPLUS_INFO(m_logger, "HTTP Server closed"); }
+HttpServer::~HttpServer()
+{
+  LOG4CPLUS_INFO(m_logger, "HTTP Server closed");
+  const QList<QTcpSocket*> sockets = m_buffers.keys();
+  for (QTcpSocket* socket : sockets)
+  {
+    if (socket->isOpen())
+      socket->deleteLater();
+  }
+  m_buffers.clear();
+}
 
 void HttpServer::connection()
 {
@@ -53,9 +63,9 @@ void HttpServer::disconnected()
   }
 }
 
-void HttpServer::error(const QString& errorMsg)
+void HttpServer::error(QAbstractSocket::SocketError socketError)
 {
-  LOG4CPLUS_ERROR(m_logger, "Error: " << errorMsg.toStdString());
+  LOG4CPLUS_ERROR(m_logger, "Error: " << socketError);
 }
 
 void HttpServer::readyRead()
@@ -70,10 +80,58 @@ void HttpServer::readyRead()
     {
       int index = buffer.indexOf(delimiter);
       QByteArray data = buffer.left(index);
-      buffer.remove(0, index + 1);
-      emit getStats();
+      buffer.remove(0, index + 4);
+
+      QList<QByteArray> lines = data.split('\n');
+      QByteArray requestLine = lines.first().trimmed();
+      QList<QByteArray> parts = requestLine.split(' ');
+      if (parts.size() >= 2 && parts[0] == "GET")
+      {
+        QString target(parts[1]);
+        QUrl url(target);
+        if (url.path() == "/getStats")
+        {
+          socket->setProperty("waitingStats", true);
+          emit getStats();
+        }
+      }
     }
   }
 }
 
-void sendAnswer() {}
+void HttpServer::sendStats(int count, size_t size)
+{
+  m_countClients = count;
+  m_bytesSent = size;
+  sendAnswer();
+}
+
+void HttpServer::sendAnswer()
+{
+  QJsonObject jsonObj;
+  jsonObj["ClientCount"] = m_countClients;
+  jsonObj["BytesSent"] = static_cast<qint64>(m_bytesSent);
+  QByteArray body = QJsonDocument(jsonObj).toJson(QJsonDocument::Compact);
+  QByteArray response;
+  response.append("HTTP/1.1 200 OK\r\n");
+  response.append("Content-Type: application/json; charset=utf-8\r\n");
+  response.append("Access-Control-Allow-Origin: *\r\n");
+  response.append("Content-Length: " + QByteArray::number(body.size()) + "\r\n");
+  response.append("\r\n");
+  response.append(body);
+  const QList<QTcpSocket*> sockets = m_buffers.keys();
+  for (QTcpSocket* socket : sockets)
+  {
+    if (socket->property("waitStats").toBool())
+    {
+      socket->setProperty("waitingStats", false);
+      if (socket->isOpen())
+      {
+        socket->write(response);
+        socket->disconnectFromHost();
+        socket->flush();
+      }
+      m_buffers.remove(socket);
+    }
+  }
+}
