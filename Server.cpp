@@ -35,6 +35,7 @@ void Server::incomingConnection(qintptr socketDescriptor)
   connect(worker, &ClientWorker::finished, thread, &QThread::quit);
   connect(thread, &QThread::finished, thread, &QThread::deleteLater);
   thread->start();
+  emit sendStats(m_workers.size(), m_totalBytesSentClients);
 }
 
 void Server::error(const QString& errorMsg)
@@ -49,16 +50,12 @@ void Server::disconnected()
   {
     m_workers.removeAll(worker);
     worker->deleteLater();
+    emit sendStats(m_workers.size(), m_totalBytesSentClients);
   }
 }
 
 void Server::sumTotalBytes(size_t size) { m_totalBytesSentClients += size; }
 
-void Server::getStats()
-{
-  int countClients = m_workers.size();
-  emit sendStats(countClients, m_totalBytesSentClients);
-}
 void Server::stop()
 {
   if (isListening())

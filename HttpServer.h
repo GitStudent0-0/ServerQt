@@ -1,5 +1,6 @@
 #ifndef HTTPSERVER_H
 #define HTTPSERVER_H
+#include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTcpServer>
@@ -23,13 +24,11 @@ private slots:
   void readyRead();
   void error(QAbstractSocket::SocketError socketError);
   void disconnected();
-  void sendAnswer();
 
 public slots:
-  void sendStats(int count, size_t bytes);
+  void stats(int count, size_t bytes);
 
 signals:
-  void getStats();
   void finished();
 
 private:

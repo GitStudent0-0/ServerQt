@@ -36,9 +36,6 @@ private slots:
   void stop();
   void sumTotalBytes(size_t size);
 
-public slots:
-  void getStats();
-
 signals:
   void sendStats(int count, size_t bytes);
 

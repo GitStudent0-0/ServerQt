@@ -46,6 +46,8 @@ LogLevel getLogLevel(QString log)
 
 int main(int argc, char* argv[])
 {
+  qRegisterMetaType<size_t>("size_t");
+
   signal(SIGINT, signalHandler);
   signal(SIGTERM, signalHandler);
 
@@ -107,9 +109,9 @@ int main(int argc, char* argv[])
   else
     LOG4CPLUS_FATAL(m_logger, "Error: Protocol specified incorrectly");
 
-  httpServer = new HttpServer(qApp, 80);
-  QObject::connect(httpServer, &HttpServer::getStats, server, &Server::getStats);
-  QObject::connect(server, &Server::sendStats, httpServer, &HttpServer::sendStats);
+  httpServer = new HttpServer(qApp, 8080);
+
+  QObject::connect(server, &Server::sendStats, httpServer, &HttpServer::stats);
 
   return a.exec();
 }
